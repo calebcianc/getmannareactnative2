@@ -1,6 +1,31 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Modal, Portal, Text, useTheme } from 'react-native-paper';
+import { IconButton, Modal, Portal, Text, useTheme } from 'react-native-paper';
+
+const getStyles = (theme) =>
+  StyleSheet.create({
+    modalContainer: {
+      backgroundColor: theme.colors.background,
+      padding: 20,
+      margin: 20,
+      borderRadius: 8,
+      maxHeight: '80%',
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
+    },
+    closeButton: {
+      margin: -8, // to counteract the default margin of IconButton
+    },
+  });
 
 export default function SelectionModal({
   visible,
@@ -9,22 +34,7 @@ export default function SelectionModal({
   children,
 }) {
   const theme = useTheme();
-
-  const styles = StyleSheet.create({
-    modalContainer: {
-      backgroundColor: theme.colors.background,
-      padding: 20,
-      margin: 20,
-      borderRadius: 8,
-      maxHeight: '80%',
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginBottom: 20,
-      color: theme.colors.onSurface,
-    },
-  });
+  const styles = getStyles(theme);
 
   return (
     <Portal>
@@ -33,10 +43,15 @@ export default function SelectionModal({
         onDismiss={onDismiss}
         contentContainerStyle={styles.modalContainer}
       >
-        <View>
+        <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
-          {children}
+          <IconButton
+            icon="close"
+            onPress={onDismiss}
+            style={styles.closeButton}
+          />
         </View>
+        {children}
       </Modal>
     </Portal>
   );

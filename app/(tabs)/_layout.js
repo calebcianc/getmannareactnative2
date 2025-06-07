@@ -2,8 +2,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Appbar, SegmentedButtons } from 'react-native-paper';
-import { BibleProvider, useBible } from '../context/BibleProvider';
+import { Appbar, SegmentedButtons, useTheme } from 'react-native-paper';
+import { useBible } from '../context/BibleProvider';
+import { useThemeContext } from '../context/ThemeProvider';
 
 function BibleHeader() {
   const {
@@ -16,6 +17,8 @@ function BibleHeader() {
     isTranslationModalVisible,
   } = useBible();
   const [value, setValue] = useState('');
+  const { toggleTheme, isDarkTheme } = useThemeContext();
+  const theme = useTheme();
 
   useEffect(() => {
     if (!isBookModalVisible && !isTranslationModalVisible) {
@@ -26,13 +29,13 @@ function BibleHeader() {
   return (
     <Appbar.Header
       style={{
-        backgroundColor: '#FFFFFF',
+        backgroundColor: theme.colors.surface,
         borderBottomWidth: 1,
-        borderBottomColor: '#E0E0E0',
+        borderBottomColor: theme.colors.outlineVariant,
         justifyContent: 'space-between',
       }}
     >
-      <View style={{  paddingHorizontal: 8 }}>
+      <View style={{ paddingHorizontal: 8 }}>
         <SegmentedButtons
           value={value}
           onValueChange={(newValue) => {
@@ -46,7 +49,9 @@ function BibleHeader() {
           buttons={[
             {
               value: 'book',
-              label: selectedBook ? `${selectedBook.name} ${selectedChapter}` : 'Select Book',
+              label: selectedBook
+                ? `${selectedBook.name} ${selectedChapter}`
+                : 'Select Book',
               disabled: isTranslationModalVisible,
               style: {
                 flex: 1.5,
@@ -65,6 +70,10 @@ function BibleHeader() {
       </View>
       <View style={{ flexDirection: 'row' }}>
         <Appbar.Action icon="magnify" onPress={() => {}} />
+        <Appbar.Action
+          icon={isDarkTheme ? 'white-balance-sunny' : 'moon-waning-crescent'}
+          onPress={toggleTheme}
+        />
         <Appbar.Action icon="dots-vertical" onPress={() => {}} />
       </View>
     </Appbar.Header>
@@ -72,54 +81,56 @@ function BibleHeader() {
 }
 
 export default function TabsLayout() {
+  const theme = useTheme();
+
   return (
-    <BibleProvider>
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: '#1F1F1F',
-          tabBarInactiveTintColor: '#8e8e93',
-          tabBarStyle: {
-            height: 80,
-            paddingTop: 10,
-            paddingBottom: 15,
-          },
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
-          },
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.tertiary,
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.outlineVariant,
+          height: 80,
+          paddingTop: 10,
+          paddingBottom: 15,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="home" size={28} color={color} />
+          ),
         }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Home',
-            tabBarIcon: ({ color }) => (
-              <MaterialIcons name="home" size={28} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="bible"
-          options={{
-            title: 'Bible',
-            headerShown: true,
-            header: () => <BibleHeader />,
-            tabBarIcon: ({ color }) => (
-              <MaterialIcons name="book" size={28} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            title: 'Settings',
-            tabBarIcon: ({ color }) => (
-              <MaterialIcons name="settings" size={28} color={color} />
-            ),
-          }}
-        />
-      </Tabs>
-    </BibleProvider>
+      />
+      <Tabs.Screen
+        name="bible"
+        options={{
+          title: 'Bible',
+          headerShown: true,
+          header: () => <BibleHeader />,
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="book" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => (
+            <MaterialIcons name="settings" size={28} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 } 

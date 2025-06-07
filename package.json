@@ -14,6 +14,7 @@
     "@expo-google-fonts/poppins": "^0.4.0",
     "@expo/vector-icons": "^14.1.0",
     "@native-html/css-processor": "^1.11.0",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.3.14",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.10",

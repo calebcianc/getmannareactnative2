@@ -12,8 +12,90 @@ import {
 import SelectionModal from '../components/SelectionModal';
 import { useBible } from '../context/BibleProvider';
 
+const toSuperscript = (str) => {
+  const superscripts = {
+    '0': '⁰',
+    '1': '¹',
+    '2': '²',
+    '3': '³',
+    '4': '⁴',
+    '5': '⁵',
+    '6': '⁶',
+    '7': '⁷',
+    '8': '⁸',
+    '9': '⁹',
+  };
+  return String(str)
+    .split('')
+    .map((char) => superscripts[char] || char)
+    .join('');
+};
+
+const getStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    loader: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    content: {
+      paddingHorizontal: 20,
+      paddingTop: 10,
+      paddingBottom: 100,
+    },
+    paragraph: {
+      fontSize: 18,
+      lineHeight: 28,
+      marginBottom: 16,
+      color: theme.colors.onBackground,
+    },
+    verseNumber: {
+      fontWeight: 'bold',
+      color: theme.colors.tertiary,
+    },
+    fabLeft: {
+      position: 'absolute',
+      margin: 20,
+      left: 0,
+      bottom: 0,
+      borderRadius: 28,
+      elevation: 0,
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    fabRight: {
+      position: 'absolute',
+      margin: 20,
+      right: 0,
+      bottom: 0,
+      borderRadius: 28,
+      elevation: 0,
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    chaptersContainer: {
+      paddingVertical: 10,
+    },
+    chapterItemContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 12,
+      margin: 5,
+      borderRadius: 8,
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    chapterItem: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: theme.colors.onSurfaceVariant,
+    },
+  });
+
 export default function BibleScreen() {
   const theme = useTheme();
+  const styles = getStyles(theme);
   const {
     loading,
     verses,
@@ -110,9 +192,12 @@ export default function BibleScreen() {
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
             <Paragraph style={styles.paragraph}>
-              {verses.map((verse) => (
+              {verses.map((verse, index) => (
                 <Text key={verse.verse}>
-                  <Text style={styles.verseNumber}>{verse.verse} </Text>
+                  {index > 0 && ' '}
+                  <Text style={styles.verseNumber}>
+                    {toSuperscript(verse.verse)}{' '}
+                  </Text>
                   {decode(verse.text.replace(/<[^>]+>/g, ''))}
                 </Text>
               ))}
@@ -158,65 +243,4 @@ export default function BibleScreen() {
       </View>
     </Portal.Host>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 100,
-  },
-  paragraph: {
-    fontSize: 18,
-    lineHeight: 28,
-    marginBottom: 16,
-  },
-  verseNumber: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: 'gray',
-    lineHeight: 28,
-  },
-  fabLeft: {
-    position: 'absolute',
-    margin: 20,
-    left: 0,
-    bottom: 0,
-    borderRadius: 28,
-    elevation: 0,
-    backgroundColor: '#E0E0E0',
-  },
-  fabRight: {
-    position: 'absolute',
-    margin: 20,
-    right: 0,
-    bottom: 0,
-    borderRadius: 28,
-    elevation: 0,
-    backgroundColor: '#E0E0E0',
-  },
-  chaptersContainer: {
-    paddingVertical: 10,
-  },
-  chapterItemContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    margin: 5,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-  },
-  chapterItem: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-}); 
+} 
