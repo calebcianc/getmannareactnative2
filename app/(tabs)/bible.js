@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   FAB,
+  IconButton,
   List,
   Paragraph,
   Portal,
@@ -56,6 +57,10 @@ const getStyles = (theme) =>
       fontWeight: 'bold',
       color: theme.colors.tertiary,
     },
+    selectedVerse: {
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: 6,
+    },
     fabLeft: {
       position: 'absolute',
       margin: 20,
@@ -73,6 +78,19 @@ const getStyles = (theme) =>
       borderRadius: 28,
       elevation: 0,
       backgroundColor: theme.colors.surfaceVariant,
+    },
+    selectionOptionsBar: {
+      position: 'absolute',
+      bottom: 20,
+      left: 20,
+      right: 20,
+      borderRadius: 28,
+      backgroundColor: theme.colors.surface,
+      flexDirection: 'row',
+      justifyContent: 'space-evenly',
+      alignItems: 'center',
+      paddingVertical: 4,
+      elevation: 2,
     },
     chaptersContainer: {
       paddingVertical: 10,
@@ -115,6 +133,7 @@ export default function BibleScreen() {
   } = useBible();
 
   const [tempSelectedBook, setTempSelectedBook] = useState(null);
+  const [selectedVerse, setSelectedVerse] = useState(null);
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
@@ -138,6 +157,14 @@ export default function BibleScreen() {
     if (selectedChapter > 1) {
       setScrollPosition(0);
       setSelectedChapter(selectedChapter - 1);
+    }
+  };
+
+  const handleVersePress = (verse) => {
+    if (selectedVerse && selectedVerse.verse === verse.verse) {
+      setSelectedVerse(null);
+    } else {
+      setSelectedVerse(verse);
     }
   };
 
@@ -213,30 +240,54 @@ export default function BibleScreen() {
             scrollEventThrottle={16}
           >
             <Paragraph style={styles.paragraph}>
-              {verses.map((verse, index) => (
-                <Text key={verse.verse}>
-                  {index > 0 && ' '}
-                  <Text style={styles.verseNumber}>
-                    {toSuperscript(verse.verse)}{' '}
+              {verses.map((verse, index) => {
+                const isSelected =
+                  selectedVerse && selectedVerse.verse === verse.verse;
+
+                return (
+                  <Text
+                    key={verse.verse}
+                    style={isSelected ? styles.selectedVerse : {}}
+                    onPress={() => handleVersePress(verse)}
+                  >
+                    {index > 0 && ' '}
+                    <Text style={styles.verseNumber}>
+                      {toSuperscript(verse.verse)}{' '}
+                    </Text>
+                    {decode(verse.text.replace(/<[^>]+>/g, ''))}
                   </Text>
-                  {decode(verse.text.replace(/<[^>]+>/g, ''))}
-                </Text>
-              ))}
+                );
+              })}
             </Paragraph>
           </ScrollView>
         )}
-        <FAB
-          icon="arrow-left"
-          style={styles.fabLeft}
-          onPress={handlePrevChapter}
-          disabled={loading || selectedChapter === 1}
-        />
-        <FAB
-          icon="arrow-right"
-          style={styles.fabRight}
-          onPress={handleNextChapter}
-          disabled={loading || !selectedBook || selectedChapter === selectedBook.chapters}
-        />
+        {selectedVerse ? (
+          <View style={styles.selectionOptionsBar}>
+            <IconButton icon="content-copy" onPress={() => {}} />
+            <IconButton icon="share-variant" onPress={() => {}} />
+            <IconButton icon="bookmark-outline" onPress={() => {}} />
+            <IconButton icon="close" onPress={() => setSelectedVerse(null)} />
+          </View>
+        ) : (
+          <>
+            <FAB
+              icon="arrow-left"
+              style={styles.fabLeft}
+              onPress={handlePrevChapter}
+              disabled={loading || selectedChapter === 1}
+            />
+            <FAB
+              icon="arrow-right"
+              style={styles.fabRight}
+              onPress={handleNextChapter}
+              disabled={
+                loading ||
+                !selectedBook ||
+                selectedChapter === selectedBook.chapters
+              }
+            />
+          </>
+        )}
         <SelectionModal
           visible={isBookModalVisible}
           onDismiss={closeBookSelectionModal}
