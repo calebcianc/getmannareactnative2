@@ -26,6 +26,7 @@ export function BibleProvider({ children }) {
   const [verses, setVerses] = useState([]);
   const [isBookModalVisible, setBookModalVisible] = useState(false);
   const [isTranslationModalVisible, setTranslationModalVisible] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   useEffect(() => {
     if (selectedTranslation) {
@@ -38,8 +39,23 @@ export function BibleProvider({ children }) {
           );
           setBooks(filteredBooks);
           if (filteredBooks.length > 0) {
-            setSelectedBook(filteredBooks[0]);
-            setSelectedChapter(1);
+            if (selectedBook) {
+              const newBookData = filteredBooks.find(
+                (b) => b.name === selectedBook.name
+              );
+              if (newBookData) {
+                if (selectedChapter > newBookData.chapters) {
+                  setSelectedChapter(newBookData.chapters);
+                }
+                setSelectedBook(newBookData);
+              } else {
+                setSelectedBook(filteredBooks[0]);
+                setSelectedChapter(1);
+              }
+            } else {
+              setSelectedBook(filteredBooks[0]);
+              setSelectedChapter(1);
+            }
           }
           setLoading(false);
         })
@@ -80,6 +96,8 @@ export function BibleProvider({ children }) {
     setBookModalVisible,
     isTranslationModalVisible,
     setTranslationModalVisible,
+    scrollPosition,
+    setScrollPosition,
   };
 
   return (

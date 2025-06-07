@@ -1,5 +1,5 @@
 import { decode } from 'html-entities';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   FAB,
@@ -110,18 +110,33 @@ export default function BibleScreen() {
     setTranslationModalVisible,
     books,
     translations,
+    scrollPosition,
+    setScrollPosition,
   } = useBible();
 
   const [tempSelectedBook, setTempSelectedBook] = useState(null);
+  const scrollViewRef = useRef(null);
+
+  useEffect(() => {
+    if (!loading && scrollViewRef.current) {
+      setTimeout(() => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ y: scrollPosition, animated: false });
+        }
+      }, 100);
+    }
+  }, [loading]);
 
   const handleNextChapter = () => {
     if (selectedBook && selectedChapter < selectedBook.chapters) {
+      setScrollPosition(0);
       setSelectedChapter(selectedChapter + 1);
     }
   };
 
   const handlePrevChapter = () => {
     if (selectedChapter > 1) {
+      setScrollPosition(0);
       setSelectedChapter(selectedChapter - 1);
     }
   };
@@ -132,6 +147,7 @@ export default function BibleScreen() {
   
   const onSelectChapter = (chapter) => {
     setSelectedBook(tempSelectedBook);
+    setScrollPosition(0);
     setSelectedChapter(chapter);
     setBookModalVisible(false);
     setTempSelectedBook(null);
@@ -190,7 +206,12 @@ export default function BibleScreen() {
         {loading ? (
           <ActivityIndicator size="large" style={styles.loader} />
         ) : (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={styles.content}
+            onScroll={(e) => setScrollPosition(e.nativeEvent.contentOffset.y)}
+            scrollEventThrottle={16}
+          >
             <Paragraph style={styles.paragraph}>
               {verses.map((verse, index) => (
                 <Text key={verse.verse}>
