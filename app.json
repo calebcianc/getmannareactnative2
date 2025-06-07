@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "temp-native-app",
-    "slug": "temp-native-app",
+    "name": "native",
+    "slug": "native",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tempnativeapp",
+    "scheme": "native",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

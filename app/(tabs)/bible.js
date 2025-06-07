@@ -1,0 +1,222 @@
+import { decode } from 'html-entities';
+import React, { useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  FAB,
+  List,
+  Paragraph,
+  Portal,
+  Text,
+  useTheme,
+} from 'react-native-paper';
+import SelectionModal from '../components/SelectionModal';
+import { useBible } from '../context/BibleProvider';
+
+export default function BibleScreen() {
+  const theme = useTheme();
+  const {
+    loading,
+    verses,
+    selectedBook,
+    setSelectedBook,
+    selectedChapter,
+    setSelectedChapter,
+    setSelectedTranslation,
+    isBookModalVisible,
+    setBookModalVisible,
+    isTranslationModalVisible,
+    setTranslationModalVisible,
+    books,
+    translations,
+  } = useBible();
+
+  const [tempSelectedBook, setTempSelectedBook] = useState(null);
+
+  const handleNextChapter = () => {
+    if (selectedBook && selectedChapter < selectedBook.chapters) {
+      setSelectedChapter(selectedChapter + 1);
+    }
+  };
+
+  const handlePrevChapter = () => {
+    if (selectedChapter > 1) {
+      setSelectedChapter(selectedChapter - 1);
+    }
+  };
+
+  const onSelectBook = (book) => {
+    setTempSelectedBook(book);
+  };
+  
+  const onSelectChapter = (chapter) => {
+    setSelectedBook(tempSelectedBook);
+    setSelectedChapter(chapter);
+    setBookModalVisible(false);
+    setTempSelectedBook(null);
+  };
+
+  const onSelectTranslation = (translation) => {
+    setSelectedTranslation(translation.short_name);
+    setTranslationModalVisible(false);
+  };
+
+  const renderChapterItem = ({ item }) => (
+    <Pressable
+      style={styles.chapterItemContainer}
+      onPress={() => onSelectChapter(item)}
+    >
+      <Text style={styles.chapterItem}>{item}</Text>
+    </Pressable>
+  );
+
+  const closeBookSelectionModal = () => {
+    setBookModalVisible(false);
+    setTempSelectedBook(null);
+  };
+
+  let bookModalContent;
+  if (!tempSelectedBook) {
+    bookModalContent = (
+      <FlatList
+        key="book-list"
+        data={books}
+        keyExtractor={(item) => item.bookid.toString()}
+        renderItem={({ item }) => (
+          <List.Item title={item.name} onPress={() => onSelectBook(item)} />
+        )}
+      />
+    );
+  } else {
+    bookModalContent = (
+      <FlatList
+        key="chapter-list"
+        data={Array.from(
+          { length: tempSelectedBook.chapters || 0 },
+          (_, i) => i + 1
+        )}
+        renderItem={renderChapterItem}
+        keyExtractor={(item) => item.toString()}
+        numColumns={5}
+        contentContainerStyle={styles.chaptersContainer}
+      />
+    );
+  }
+
+  return (
+    <Portal.Host>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        {loading ? (
+          <ActivityIndicator size="large" style={styles.loader} />
+        ) : (
+          <ScrollView contentContainerStyle={styles.content}>
+            <Paragraph style={styles.paragraph}>
+              {verses.map((verse) => (
+                <Text key={verse.verse}>
+                  <Text style={styles.verseNumber}>{verse.verse} </Text>
+                  {decode(verse.text.replace(/<[^>]+>/g, ''))}
+                </Text>
+              ))}
+            </Paragraph>
+          </ScrollView>
+        )}
+        <FAB
+          icon="arrow-left"
+          style={styles.fabLeft}
+          onPress={handlePrevChapter}
+          disabled={loading || selectedChapter === 1}
+        />
+        <FAB
+          icon="arrow-right"
+          style={styles.fabRight}
+          onPress={handleNextChapter}
+          disabled={loading || !selectedBook || selectedChapter === selectedBook.chapters}
+        />
+        <SelectionModal
+          visible={isBookModalVisible}
+          onDismiss={closeBookSelectionModal}
+          title={!tempSelectedBook ? 'Select Book' : `Select Chapter for ${tempSelectedBook.name}`}
+        >
+          {bookModalContent}
+        </SelectionModal>
+
+        <SelectionModal
+          visible={isTranslationModalVisible}
+          onDismiss={() => setTranslationModalVisible(false)}
+          title="Select Translation"
+        >
+          <FlatList
+            data={translations}
+            keyExtractor={(item) => item.short_name}
+            renderItem={({ item }) => (
+              <List.Item
+                title={`${item.short_name} - ${item.full_name}`}
+                onPress={() => onSelectTranslation(item)}
+              />
+            )}
+          />
+        </SelectionModal>
+      </View>
+    </Portal.Host>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 100,
+  },
+  paragraph: {
+    fontSize: 18,
+    lineHeight: 28,
+    marginBottom: 16,
+  },
+  verseNumber: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'gray',
+    lineHeight: 28,
+  },
+  fabLeft: {
+    position: 'absolute',
+    margin: 20,
+    left: 0,
+    bottom: 0,
+    borderRadius: 28,
+    elevation: 0,
+    backgroundColor: '#E0E0E0',
+  },
+  fabRight: {
+    position: 'absolute',
+    margin: 20,
+    right: 0,
+    bottom: 0,
+    borderRadius: 28,
+    elevation: 0,
+    backgroundColor: '#E0E0E0',
+  },
+  chaptersContainer: {
+    paddingVertical: 10,
+  },
+  chapterItemContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    margin: 5,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  chapterItem: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+}); 
