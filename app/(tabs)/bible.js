@@ -2,6 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { decode } from 'html-entities';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   FAB,
   Menu,
@@ -10,6 +11,13 @@ import {
   Text,
   useTheme
 } from 'react-native-paper';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
 import ExpoundBottomSheet from '../components/ExpoundBottomSheet';
 import { useBible } from '../context/BibleProvider';
 
@@ -184,6 +192,41 @@ export default function BibleScreen() {
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
   const [isHighlightMenuVisible, setHighlightMenuVisible] = useState(false);
   const scrollViewRef = useRef(null);
+  const translateY = useSharedValue(0);
+  const startY = useSharedValue(0);
+
+  const dismiss = () => {
+    setSelectedVerses([]);
+  };
+
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      startY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      translateY.value = startY.value + event.translationY;
+    })
+    .onEnd(() => {
+      if (translateY.value > 100) {
+        translateY.value = withTiming(500, {}, () => {
+          runOnJS(dismiss)();
+        });
+      } else {
+        translateY.value = withSpring(0);
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
+  });
+
+  useEffect(() => {
+    if (selectedVerses.length === 0) {
+      translateY.value = 0; // Reset position when selection is cleared
+    }
+  }, [selectedVerses]);
 
   useEffect(() => {
     if (!loading && scrollViewRef.current) {
@@ -337,29 +380,31 @@ export default function BibleScreen() {
           </ScrollView>
         )}
         {selectedVerses.length > 0 ? (
-          <View style={styles.selectionOptionsBar}>
-            <View style={styles.pullDownHandle} />
+          <GestureDetector gesture={panGesture}>
+            <Animated.View style={[styles.selectionOptionsBar, animatedStyle]}>
+              <View style={styles.pullDownHandle} />
 
-            <View style={styles.expoundButtonContainer}>
-              <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
-                <MaterialIcons name="manage-search" size={24} color={theme.colors.onSurface} />
-                <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
-              </Pressable>
-            </View>
+              <View style={styles.expoundButtonContainer}>
+                <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
+                  <MaterialIcons name="manage-search" size={24} color={theme.colors.onSurface} />
+                  <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
+                </Pressable>
+              </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
-              {firstRowActions.map((action, index) =>
-                action.menu ? (
-                  action.menu
-                ) : (
-                  <Pressable key={index} style={styles.actionButton} onPress={action.onPress}>
-                    <MaterialIcons name={action.icon} size={20} color={theme.colors.onSurface} />
-                    <Text style={styles.actionButtonText}>{action.label}</Text>
-                  </Pressable>
-                )
-              )}
-            </ScrollView>
-          </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
+                {firstRowActions.map((action, index) =>
+                  action.menu ? (
+                    action.menu
+                  ) : (
+                    <Pressable key={index} style={styles.actionButton} onPress={action.onPress}>
+                      <MaterialIcons name={action.icon} size={20} color={theme.colors.onSurface} />
+                      <Text style={styles.actionButtonText}>{action.label}</Text>
+                    </Pressable>
+                  )
+                )}
+              </ScrollView>
+            </Animated.View>
+          </GestureDetector>
         ) : (
           <>
             <FAB

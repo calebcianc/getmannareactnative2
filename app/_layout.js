@@ -1,35 +1,50 @@
-import { Poppins_400Regular, Poppins_700Bold, useFonts } from '@expo-google-fonts/poppins';
-import { Slot, SplashScreen } from 'expo-router';
+import {
+    Poppins_400Regular,
+    Poppins_700Bold
+} from '@expo-google-fonts/poppins';
+import { useFonts } from 'expo-font';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { BibleProvider } from './context/BibleProvider';
 import { ThemeProvider, useThemeContext } from './context/ThemeProvider';
 
 SplashScreen.preventAutoHideAsync();
 
-function RootLayoutNav() {
+function RootLayout() {
   const { theme } = useThemeContext();
-  return (
-    <PaperProvider theme={theme}>
-      <BibleProvider>
-        <Slot />
-      </BibleProvider>
-    </PaperProvider>
-  );
-}
-
-export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
+  const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_700Bold,
   });
 
-  if (!fontsLoaded && !fontError) {
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
     return null;
   }
 
   return (
-    <ThemeProvider>
-      <RootLayoutNav />
-    </ThemeProvider>
+    <PaperProvider theme={theme}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </PaperProvider>
+  );
+}
+
+export default function Layout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <BibleProvider>
+          <RootLayout />
+        </BibleProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 } 
