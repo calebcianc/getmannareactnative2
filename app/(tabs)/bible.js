@@ -84,13 +84,15 @@ const getStyles = (theme) =>
       bottom: 20,
       left: 20,
       right: 20,
-      borderRadius: 28,
-      backgroundColor: theme.colors.surface,
       flexDirection: 'row',
       justifyContent: 'space-evenly',
       alignItems: 'center',
       paddingVertical: 4,
-      elevation: 2,
+      borderRadius: 28,
+      backgroundColor: theme.colors.surfaceVariant,
+      elevation: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.outline,
     },
     chaptersContainer: {
       paddingVertical: 10,
@@ -133,7 +135,7 @@ export default function BibleScreen() {
   } = useBible();
 
   const [tempSelectedBook, setTempSelectedBook] = useState(null);
-  const [selectedVerse, setSelectedVerse] = useState(null);
+  const [selectedVerses, setSelectedVerses] = useState([]);
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
@@ -161,11 +163,18 @@ export default function BibleScreen() {
   };
 
   const handleVersePress = (verse) => {
-    if (selectedVerse && selectedVerse.verse === verse.verse) {
-      setSelectedVerse(null);
-    } else {
-      setSelectedVerse(verse);
-    }
+    setSelectedVerses((prevSelectedVerses) => {
+      const isSelected = prevSelectedVerses.some(
+        (v) => v.verse === verse.verse
+      );
+      if (isSelected) {
+        return prevSelectedVerses.filter((v) => v.verse !== verse.verse);
+      } else {
+        const newSelectedVerses = [...prevSelectedVerses, verse];
+        newSelectedVerses.sort((a, b) => a.verse - b.verse);
+        return newSelectedVerses;
+      }
+    });
   };
 
   const onSelectBook = (book) => {
@@ -241,8 +250,9 @@ export default function BibleScreen() {
           >
             <Paragraph style={styles.paragraph}>
               {verses.map((verse, index) => {
-                const isSelected =
-                  selectedVerse && selectedVerse.verse === verse.verse;
+                const isSelected = selectedVerses.some(
+                  (v) => v.verse === verse.verse
+                );
 
                 return (
                   <Text
@@ -261,12 +271,12 @@ export default function BibleScreen() {
             </Paragraph>
           </ScrollView>
         )}
-        {selectedVerse ? (
+        {selectedVerses.length > 0 ? (
           <View style={styles.selectionOptionsBar}>
             <IconButton icon="content-copy" onPress={() => {}} />
             <IconButton icon="share-variant" onPress={() => {}} />
             <IconButton icon="bookmark-outline" onPress={() => {}} />
-            <IconButton icon="close" onPress={() => setSelectedVerse(null)} />
+            <IconButton icon="close" onPress={() => setSelectedVerses([])} />
           </View>
         ) : (
           <>
