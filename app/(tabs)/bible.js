@@ -1,6 +1,7 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { decode } from 'html-entities';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   FAB,
   IconButton,
@@ -9,6 +10,7 @@ import {
   Text,
   useTheme
 } from 'react-native-paper';
+import ExpoundBottomSheet from '../components/ExpoundBottomSheet';
 import { useBible } from '../context/BibleProvider';
 
 const toSuperscript = (str) => {
@@ -87,15 +89,35 @@ const getStyles = (theme) =>
       bottom: 20,
       left: 20,
       right: 20,
-      flexDirection: 'row',
-      justifyContent: 'space-evenly',
-      alignItems: 'center',
       paddingVertical: 4,
       borderRadius: 28,
       backgroundColor: theme.colors.surfaceVariant,
       elevation: 4,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.outline,
+    },
+    selectionOptionsBarRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-evenly',
+      alignItems: 'center',
+    },
+    expoundButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.primaryContainer,
+      marginHorizontal: 8,
+      marginBottom: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 16,
+      elevation: 2,
+    },
+    expoundButtonText: {
+      marginLeft: 12,
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.colors.onPrimaryContainer,
+      flex: 1,
     },
     chaptersContainer: {
       paddingVertical: 10,
@@ -135,6 +157,7 @@ export default function BibleScreen() {
   } = useBible();
 
   const [selectedVerses, setSelectedVerses] = useState([]);
+  const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
@@ -175,6 +198,22 @@ export default function BibleScreen() {
       }
     });
   };
+
+  const showBottomSheet = () => setBottomSheetVisible(true);
+  const hideBottomSheet = () => setBottomSheetVisible(false);
+
+  const getVerseRange = (verses) => {
+    if (!verses || verses.length === 0) return '';
+    const firstVerse = verses[0].verse;
+    const lastVerse = verses[verses.length - 1].verse;
+    if (firstVerse === lastVerse) {
+      return `${firstVerse}`;
+    }
+    return `${firstVerse}-${lastVerse}`;
+  };
+
+  const verseRef = `${selectedBook?.name} ${selectedChapter}:${getVerseRange(selectedVerses)}`;
+  const expoundText = `Expound on ${verseRef}`;
 
   return (
     <Portal.Host>
@@ -218,10 +257,16 @@ export default function BibleScreen() {
         )}
         {selectedVerses.length > 0 ? (
           <View style={styles.selectionOptionsBar}>
-            <IconButton icon="content-copy" onPress={() => {}} />
-            <IconButton icon="share-variant" onPress={() => {}} />
-            <IconButton icon="bookmark-outline" onPress={() => {}} />
-            <IconButton icon="close" onPress={() => setSelectedVerses([])} />
+            <View style={styles.selectionOptionsBarRow}>
+              <IconButton icon="content-copy" onPress={() => {}} />
+              <IconButton icon="share-variant" onPress={() => {}} />
+              <IconButton icon="bookmark-outline" onPress={() => {}} />
+              <IconButton icon="close" onPress={() => setSelectedVerses([])} />
+            </View>
+            <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
+              <MaterialIcons name="manage-search" size={24} color={theme.colors.onPrimaryContainer} />
+              <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
+            </Pressable>
           </View>
         ) : (
           <>
@@ -243,6 +288,12 @@ export default function BibleScreen() {
             />
           </>
         )}
+        <ExpoundBottomSheet
+          visible={isBottomSheetVisible}
+          onDismiss={hideBottomSheet}
+          selectedVerses={selectedVerses}
+          book={selectedBook}
+        />
       </View>
     </Portal.Host>
   );
