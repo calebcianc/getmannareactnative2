@@ -81,35 +81,57 @@ const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book, chapter 
         contentContainerStyle={styles.modalContainer}
       >
         <Animated.View style={[styles.container, animatedStyle]}>
-          <IconButton
-            icon="close"
-            size={24}
-            onPress={onDismiss}
-            style={styles.closeButton}
-          />
-          <Text style={styles.title}>{title}</Text>
-          <ScrollView style={styles.responseContainer} ref={scrollViewRef}>
-            <Text>{conversationText}</Text>
-            {isStreaming && <ActivityIndicator animating={true} style={{ marginVertical: 10 }} />}
+          <View style={styles.header}>
+            <IconButton
+              icon="history"
+              size={24}
+              onPress={() => {
+                /* Handle past chats view */
+              }}
+              style={styles.headerIcon}
+            />
+            <Text style={styles.title}>{title}</Text>
+            <IconButton
+              icon="close"
+              size={24}
+              onPress={onDismiss}
+              style={styles.headerIcon}
+            />
+          </View>
+          <ScrollView
+            style={styles.responseContainer}
+            ref={scrollViewRef}
+            contentContainerStyle={styles.scrollContentContainer}
+          >
+            <Text style={styles.responseText}>{conversationText}</Text>
+            {isStreaming && (
+              <ActivityIndicator animating={true} style={{ marginVertical: 10 }} />
+            )}
           </ScrollView>
           <View style={styles.inputContainer}>
-            <TextInput
-              mode="outlined"
-              placeholder="Ask a follow-up question"
-              style={styles.textInput}
-              value={followUpQuestion}
-              onChangeText={setFollowUpQuestion}
-              onSubmitEditing={handleSendFollowUp}
-              disabled={isStreaming}
-              outlineStyle={{ borderRadius: 24 }}
-            />
-            <IconButton
-              icon="send"
-              size={24}
-              onPress={handleSendFollowUp}
-              disabled={followUpQuestion.trim() === '' || isStreaming}
-              style={styles.sendButton}
-            />
+            {/* <IconButton icon="add" size={24} onPress={() => {}} /> */}
+            <View style={styles.textInputWrapper}>
+              <TextInput
+                placeholder="Ask a follow-up question"
+                style={styles.textInput}
+                value={followUpQuestion}
+                onChangeText={setFollowUpQuestion}
+                onSubmitEditing={handleSendFollowUp}
+                disabled={isStreaming}
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                placeholderTextColor={theme.colors.onSurfaceVariant}
+              />
+              <IconButton
+                icon="send"
+                size={20}
+                onPress={handleSendFollowUp}
+                disabled={followUpQuestion.trim() === '' || isStreaming}
+                style={styles.sendButton}
+                // containerColor={theme.colors.primary}
+                iconColor={theme.colors.primary}
+              />
+            </View>
           </View>
         </Animated.View>
       </Modal>
@@ -122,41 +144,67 @@ const getStyles = (theme) =>
     modalContainer: {
       flex: 1,
       justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0,0,0,0.5)',
     },
     container: {
-      backgroundColor: theme.colors.surfaceVariant,
-      padding: 20,
+      backgroundColor: theme.colors.surface,
+      padding: 16,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
-      height: '80%', // Adjust as needed
+      height: '90%',
     },
-    closeButton: {
-      position: 'absolute',
-      top: 10,
-      right: 10,
-      zIndex: 1,
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    headerIcon: {
+      margin: 0,
     },
     title: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: 'bold',
-      marginBottom: 20,
-      color: theme.colors.onSurfaceVariant,
-      paddingRight: 40, // Avoid overlapping with the close button
+      color: theme.colors.onSurface,
+      textAlign: 'center',
+      flex: 1,
     },
     responseContainer: {
       flex: 1,
-      marginBottom: 20,
+      marginBottom: 16,
+    },
+    scrollContentContainer: {
+      paddingBottom: 20,
+    },
+    responseText: {
+      fontSize: 16,
+      lineHeight: 24,
+      color: theme.colors.onSurface,
     },
     inputContainer: {
       flexDirection: 'row',
       alignItems: 'center',
+      paddingBottom: 10,
+    },
+    textInputWrapper: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: 28,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      paddingHorizontal: 8,
+      marginLeft: 8,
     },
     textInput: {
       flex: 1,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: 'transparent',
+      paddingHorizontal: 8,
+      height: 48,
     },
     sendButton: {
-      marginLeft: 8,
+      margin: 4,
     },
   });
 

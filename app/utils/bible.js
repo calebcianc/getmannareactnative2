@@ -65,4 +65,6 @@ export const PROTESTANT_BOOKS = [
   '3 John',
   'Jude',
   'Revelation',
-]; 
+];
+
+export default () => null; 

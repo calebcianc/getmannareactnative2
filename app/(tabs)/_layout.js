@@ -7,11 +7,10 @@ import {
   Button,
   Divider,
   IconButton,
-  List,
   Menu,
   Portal,
   Text,
-  useTheme,
+  useTheme
 } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookName } from '../components/BookName';
@@ -56,6 +55,7 @@ function BibleHeader() {
   const textIncreaseIcon = useCallback(MaterialIcon('text-increase'), []);
   const unfoldLessIcon = useCallback(MaterialIcon('unfold-less'), []);
   const unfoldMoreIcon = useCallback(MaterialIcon('unfold-more'), []);
+  const backIcon = useCallback(MaterialIcon('arrow-back'), []);
 
   const openFontMenu = () => setFontMenuVisible(true);
   const closeFontMenu = () => setFontMenuVisible(false);
@@ -98,11 +98,67 @@ function BibleHeader() {
       }}
       onPress={() => onSelectChapter(item)}
     >
-      <Text style={{
-        fontSize: 16,
-        fontWeight: '500',
-        color: theme.colors.onSurfaceVariant,
-      }}>{item}</Text>
+      <Text
+        style={{
+          fontSize: 16,
+          fontWeight: '500',
+          color: theme.colors.onSurfaceVariant,
+        }}
+      >
+        {item}
+      </Text>
+    </Pressable>
+  );
+
+  const renderBookItem = ({ item }) => (
+    <Pressable
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        margin: 5,
+        borderRadius: 8,
+        backgroundColor: theme.colors.surfaceVariant,
+      }}
+      onPress={() => onSelectBook(item)}
+    >
+      <Text
+        style={{
+          fontSize: 16,
+          fontWeight: '500',
+          color: theme.colors.onSurfaceVariant,
+          textAlign: 'center',
+        }}
+      >
+        {item.name}
+      </Text>
+    </Pressable>
+  );
+
+  const renderTranslationItem = ({ item }) => (
+    <Pressable
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        margin: 5,
+        borderRadius: 8,
+        backgroundColor: theme.colors.surfaceVariant,
+      }}
+      onPress={() => onSelectTranslation(item)}
+    >
+      <Text
+        style={{
+          fontSize: 16,
+          fontWeight: '500',
+          color: theme.colors.onSurfaceVariant,
+          textAlign: 'center',
+        }}
+      >
+        {item.short_name}
+      </Text>
     </Pressable>
   );
 
@@ -138,7 +194,7 @@ function BibleHeader() {
               <Button
                 onPress={openBookMenu}
                 disabled={translationMenuVisible}
-                mode="outlined"
+                // mode="outlined"
                 style={bookButtonStyle}
                 labelStyle={buttonLabelStyle}
               >
@@ -160,20 +216,25 @@ function BibleHeader() {
             }}
           >
             {!tempSelectedBook ? (
-              <View style={{ maxHeight: height * 0.5 }}>
+              <View style={{ maxHeight: height * 0.7 }}>
                 <FlatList
                   key="book-list"
                   data={books}
                   keyExtractor={(item) => item.bookid.toString()}
-                  renderItem={({ item }) => (
-                    <List.Item title={item.name} onPress={() => onSelectBook(item)} />
-                  )}
+                  renderItem={renderBookItem}
+                  numColumns={2}
+                  contentContainerStyle={{ padding: 10 }}
                 />
               </View>
             ) : (
               <View style={{ maxHeight: height * 0.7 }}>
-                 <Menu.Item title={tempSelectedBook.name} onPress={() => setTempSelectedBook(null)} />
-                 <Divider />
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <IconButton icon={backIcon} onPress={() => setTempSelectedBook(null)} />
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.colors.onSurface }}>
+                    {tempSelectedBook.name}
+                  </Text>
+                </View>
+                <Divider />
                 <FlatList
                   key="chapter-list"
                   data={Array.from(
@@ -183,7 +244,7 @@ function BibleHeader() {
                   renderItem={renderChapterItem}
                   keyExtractor={(item) => item.toString()}
                   numColumns={5}
-                  contentContainerStyle={{ padding: 10, }}
+                  contentContainerStyle={{ padding: 10 }}
                 />
               </View>
             )}
@@ -195,30 +256,30 @@ function BibleHeader() {
             anchor={
               <Button
                 onPress={openTranslationMenu}
-                disabled={bookMenuVisible}
-                mode="outlined"
+                // disabled={bookMenuVisible}
+                // mode="outlined"
                 style={translationButtonStyle}
                 labelStyle={buttonLabelStyle}
               >
                 {selectedTranslation}
               </Button>
             }
-            style={{ marginTop: 52, width: 250 }}
+            style={{ marginTop: 52 }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
               borderRadius: 12,
             }}
           >
-            <FlatList
-              data={translations}
-              keyExtractor={(item) => item.short_name}
-              renderItem={({ item }) => (
-                <List.Item
-                  title={`${item.short_name} - ${item.full_name}`}
-                  onPress={() => onSelectTranslation(item)}
-                />
-              )}
-            />
+            <View style={{ maxHeight: height * 0.7 }}>
+              <FlatList
+                key="translation-list"
+                data={translations}
+                keyExtractor={(item) => item.short_name}
+                renderItem={renderTranslationItem}
+                numColumns={2}
+                contentContainerStyle={{ padding: 10 }}
+              />
+            </View>
           </Menu>
         </View>
 

@@ -48,7 +48,7 @@ export const LightTheme = {
     inversePrimary: '#444444',
     inverseOnSurface: '#FFFFFF',
 
-    shadow: '#000000',
+    boxShadow: '#000000',
     surfaceDisabled: 'rgba(0,0,0,0.12)',
     onSurfaceDisabled: 'rgba(0,0,0,0.38)',
     backdrop: 'transparent',
@@ -94,10 +94,12 @@ export const DarkTheme = {
     inversePrimary: '#CCCCCC',
     inverseOnSurface: '#1F1F1F',
 
-    shadow: '#000000',
+    boxShadow: '#000000',
     surfaceDisabled: 'rgba(255,255,255,0.12)',
     onSurfaceDisabled: 'rgba(255,255,255,0.38)',
     backdrop: 'transparent',
   },
   fonts: configureFonts({ config: fontConfig }),
-}; 
+};
+
+export default () => null; 

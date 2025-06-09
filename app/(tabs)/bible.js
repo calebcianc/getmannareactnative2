@@ -75,7 +75,7 @@ const getStyles = (theme) =>
     },
     fabLeft: {
       position: 'absolute',
-      margin: 20,
+      margin: 15,
       left: 0,
       bottom: 0,
       borderRadius: 28,
@@ -84,7 +84,7 @@ const getStyles = (theme) =>
     },
     fabRight: {
       position: 'absolute',
-      margin: 20,
+      margin: 15,
       right: 0,
       bottom: 0,
       borderRadius: 28,
@@ -93,9 +93,9 @@ const getStyles = (theme) =>
     },
     selectionOptionsBar: {
       position: 'absolute',
-      bottom: 20,
-      left: 20,
-      right: 20,
+      bottom: 15,
+      left: 15,
+      right: 15,
       paddingBottom: 12,
       paddingTop: 24,
       borderRadius: 28,
@@ -414,11 +414,11 @@ const BibleScreen = () => {
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
-              {firstRowActions.map((action, index) =>
+              {firstRowActions.map((action) =>
                 action.menu ? (
-                  action.menu
+                  React.cloneElement(action.menu, { key: action.label })
                 ) : (
-                  <Pressable key={index} style={styles.actionButton} onPress={action.onPress}>
+                  <Pressable key={action.label} style={styles.actionButton} onPress={action.onPress}>
                     <MaterialIcons name={action.icon} size={20} color={theme.colors.onSurface} />
                     <Text style={styles.actionButtonText}>{action.label}</Text>
                   </Pressable>

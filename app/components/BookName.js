@@ -12,4 +12,6 @@ export const BookName = ({ book, chapter, style }) => {
       {displayName} {chapter}
     </Text>
   );
-}; 
+};
+
+export default BookName; 

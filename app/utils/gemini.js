@@ -20,4 +20,6 @@ export const streamGeminiResponseFromChat = async (chat, prompt) => {
     console.error('Error generating content from Gemini:', error);
     throw error;
   }
-}; 
+};
+
+export default () => null; 

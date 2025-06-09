@@ -172,4 +172,6 @@ export function BibleProvider({ children }) {
   return (
     <BibleContext.Provider value={value}>{children}</BibleContext.Provider>
   );
-} 
+}
+
+export default BibleProvider; 
