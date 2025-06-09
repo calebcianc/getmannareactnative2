@@ -134,12 +134,12 @@ export function BibleProvider({ children }) {
   // 4. Fetch verses when book or chapter changes
   useEffect(() => {
     if (selectedBook) {
-      // setLoading(true);
+      setLoading(true);
       fetch(`https://bolls.life/get-text/${selectedTranslation}/${selectedBook.bookid}/${selectedChapter}/`)
         .then((response) => response.json())
         .then(setVerses)
-        .catch((error) => console.error('Failed to fetch verses:', error));
-        // .finally(() => setLoading(false));
+        .catch((error) => console.error('Failed to fetch verses:', error))
+        .finally(() => setLoading(false));
     }
   }, [selectedBook, selectedChapter, selectedTranslation]);
 

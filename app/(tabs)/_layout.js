@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, Pressable, View, useWindowDimensions } from 'react-native';
 import {
   Appbar,
@@ -16,6 +16,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBible } from '../context/BibleProvider';
 import { useThemeContext } from '../context/ThemeProvider';
+
+const MaterialIcon = (name) => ({ size, color }) => (
+  <MaterialIcons name={name} size={size} color={color} />
+);
 
 function BibleHeader() {
   const {
@@ -40,6 +44,17 @@ function BibleHeader() {
   const [bookMenuVisible, setBookMenuVisible] = useState(false);
   const [translationMenuVisible, setTranslationMenuVisible] = useState(false);
   const [tempSelectedBook, setTempSelectedBook] = useState(null);
+
+  const searchIcon = useCallback(MaterialIcon('search'), []);
+  const themeIcon = useCallback(
+    MaterialIcon(isDarkTheme ? 'wb-sunny' : 'dark-mode'),
+    [isDarkTheme]
+  );
+  const moreVertIcon = useCallback(MaterialIcon('more-vert'), []);
+  const textDecreaseIcon = useCallback(MaterialIcon('text-decrease'), []);
+  const textIncreaseIcon = useCallback(MaterialIcon('text-increase'), []);
+  const unfoldLessIcon = useCallback(MaterialIcon('unfold-less'), []);
+  const unfoldMoreIcon = useCallback(MaterialIcon('unfold-more'), []);
 
   const openFontMenu = () => setFontMenuVisible(true);
   const closeFontMenu = () => setFontMenuVisible(false);
@@ -199,15 +214,15 @@ function BibleHeader() {
         </View>
 
         <View style={{ flexDirection: 'row' }}>
-          <Appbar.Action icon="magnify" onPress={() => {}} />
+          <Appbar.Action icon={searchIcon} onPress={() => {}} />
           <Appbar.Action
-            icon={isDarkTheme ? 'white-balance-sunny' : 'moon-waning-crescent'}
             onPress={toggleTheme}
+            icon={themeIcon}
           />
           <Menu
             visible={fontMenuVisible}
             onDismiss={closeFontMenu}
-            anchor={<Appbar.Action icon="dots-vertical" onPress={openFontMenu} />}
+            anchor={<Appbar.Action icon={moreVertIcon} onPress={openFontMenu} />}
             style={{ marginTop: 40 }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
@@ -223,11 +238,11 @@ function BibleHeader() {
                 }}
               >
                 <IconButton
-                  icon="format-font-size-decrease"
+                  icon={textDecreaseIcon}
                   onPress={decreaseFontSize}
                 />
                 <IconButton
-                  icon="format-font-size-increase"
+                  icon={textIncreaseIcon}
                   onPress={increaseFontSize}
                 />
               </View>
@@ -240,11 +255,11 @@ function BibleHeader() {
                 }}
               >
                 <IconButton
-                  icon="arrow-collapse-vertical"
+                  icon={unfoldLessIcon}
                   onPress={decreaseLineHeight}
                 />
                 <IconButton
-                  icon="arrow-expand-vertical"
+                  icon={unfoldMoreIcon}
                   onPress={increaseLineHeight}
                 />
               </View>
