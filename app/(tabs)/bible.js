@@ -58,8 +58,13 @@ const getStyles = (theme) =>
       color: theme.colors.tertiary,
     },
     selectedVerse: {
-      backgroundColor: theme.colors.surfaceVariant,
+      backgroundColor: theme.dark
+        ? 'rgba(255, 255, 255, 0.12)'
+        : 'rgba(0, 0, 0, 0.08)',
       borderRadius: 6,
+      textDecorationLine: 'underline',
+      textDecorationStyle: 'dotted',
+      textDecorationColor: theme.colors.onSurface,
     },
     fabLeft: {
       position: 'absolute',
@@ -132,6 +137,9 @@ export default function BibleScreen() {
     translations,
     scrollPosition,
     setScrollPosition,
+    fontSize,
+    lineHeight,
+    fontFamily,
   } = useBible();
 
   const [tempSelectedBook, setTempSelectedBook] = useState(null);
@@ -248,7 +256,12 @@ export default function BibleScreen() {
             onScroll={(e) => setScrollPosition(e.nativeEvent.contentOffset.y)}
             scrollEventThrottle={16}
           >
-            <Paragraph style={styles.paragraph}>
+            <Paragraph
+              style={[
+                styles.paragraph,
+                { fontSize, lineHeight, fontFamily },
+              ]}
+            >
               {verses.map((verse, index) => {
                 const isSelected = selectedVerses.some(
                   (v) => v.verse === verse.verse

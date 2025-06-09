@@ -27,6 +27,17 @@ export function BibleProvider({ children }) {
   const [isBookModalVisible, setBookModalVisible] = useState(false);
   const [isTranslationModalVisible, setTranslationModalVisible] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [fontSize, setFontSize] = useState(18);
+  const [lineHeight, setLineHeight] = useState(28);
+  const [fontFamily, setFontFamily] = useState(undefined);
+
+  const FONT_SIZE_STEP = 1;
+  const LINE_HEIGHT_STEP = 2;
+
+  const increaseFontSize = () => setFontSize(fontSize + FONT_SIZE_STEP);
+  const decreaseFontSize = () => setFontSize(fontSize - FONT_SIZE_STEP);
+  const increaseLineHeight = () => setLineHeight(lineHeight + LINE_HEIGHT_STEP);
+  const decreaseLineHeight = () => setLineHeight(lineHeight - LINE_HEIGHT_STEP);
 
   useEffect(() => {
     if (selectedTranslation) {
@@ -98,6 +109,14 @@ export function BibleProvider({ children }) {
     setTranslationModalVisible,
     scrollPosition,
     setScrollPosition,
+    fontSize,
+    lineHeight,
+    fontFamily,
+    increaseFontSize,
+    decreaseFontSize,
+    increaseLineHeight,
+    decreaseLineHeight,
+    setFontFamily,
   };
 
   return (

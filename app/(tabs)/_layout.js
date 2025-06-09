@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Appbar, SegmentedButtons, useTheme } from 'react-native-paper';
+import { Appbar, Menu, SegmentedButtons, useTheme } from 'react-native-paper';
 import { useBible } from '../context/BibleProvider';
 import { useThemeContext } from '../context/ThemeProvider';
 
@@ -15,10 +15,19 @@ function BibleHeader() {
     setTranslationModalVisible,
     isBookModalVisible,
     isTranslationModalVisible,
+    increaseFontSize,
+    decreaseFontSize,
+    increaseLineHeight,
+    decreaseLineHeight,
+    setFontFamily,
   } = useBible();
   const [value, setValue] = useState('');
   const { toggleTheme, isDarkTheme } = useThemeContext();
   const theme = useTheme();
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const openMenu = () => setMenuVisible(true);
+  const closeMenu = () => setMenuVisible(false);
 
   useEffect(() => {
     if (!isBookModalVisible && !isTranslationModalVisible) {
@@ -74,7 +83,25 @@ function BibleHeader() {
           icon={isDarkTheme ? 'white-balance-sunny' : 'moon-waning-crescent'}
           onPress={toggleTheme}
         />
-        <Appbar.Action icon="dots-vertical" onPress={() => {}} />
+        <Menu
+          visible={menuVisible}
+          onDismiss={closeMenu}
+          anchor={<Appbar.Action icon="format-font" onPress={openMenu} />}
+        >
+          <Menu.Item onPress={increaseFontSize} title="Increase Font Size" />
+          <Menu.Item onPress={decreaseFontSize} title="Decrease Font Size" />
+          <Menu.Item onPress={increaseLineHeight} title="Increase Line Spacing" />
+          <Menu.Item onPress={decreaseLineHeight} title="Decrease Line Spacing" />
+          <Menu.Item onPress={() => setFontFamily('serif')} title="Serif Font" />
+          <Menu.Item
+            onPress={() => setFontFamily('sans-serif')}
+            title="Sans-Serif Font"
+          />
+          <Menu.Item
+            onPress={() => setFontFamily(undefined)}
+            title="Default Font"
+          />
+        </Menu>
       </View>
     </Appbar.Header>
   );
