@@ -104,7 +104,7 @@ const getStyles = (theme) =>
       backgroundColor: 'transparent',
     },
     container: {
-      backgroundColor: theme.colors.elevation.level2,
+      backgroundColor: theme.colors.surfaceVariant,
       padding: 20,
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
@@ -120,7 +120,7 @@ const getStyles = (theme) =>
       fontSize: 20,
       fontWeight: 'bold',
       marginBottom: 20,
-      color: theme.colors.onSurface,
+      color: theme.colors.onSurfaceVariant,
       paddingRight: 40, // Avoid overlapping with the close button
     },
     responseContainer: {
@@ -129,6 +129,7 @@ const getStyles = (theme) =>
     },
     textInput: {
       marginBottom: 20,
+      backgroundColor: theme.colors.surface,
     },
   });
 

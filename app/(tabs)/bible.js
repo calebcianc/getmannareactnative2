@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   FAB,
-  IconButton,
   Menu,
   Paragraph,
   Portal,
@@ -90,53 +89,59 @@ const getStyles = (theme) =>
       bottom: 20,
       left: 20,
       right: 20,
-      paddingVertical: 4,
+      paddingBottom: 12,
+      paddingTop: 24,
       borderRadius: 28,
       backgroundColor: theme.colors.surfaceVariant,
       elevation: 4,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.outline,
-      paddingTop: 30,
     },
-    closeButton: {
+    pullDownHandle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.colors.onSurfaceVariant,
+      alignSelf: 'center',
       position: 'absolute',
-      top: 0,
-      right: 0,
+      top: 10,
     },
     actionsScrollView: {
       paddingHorizontal: 8,
+      marginTop: 12,
     },
-    actionItemContainer: {
+    actionButton: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: theme.colors.surface,
       borderRadius: 16,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
       marginHorizontal: 4,
     },
-    actionItemText: {
+    actionButtonText: {
       marginLeft: 8,
       fontWeight: 'bold',
       color: theme.colors.onSurface,
     },
+    expoundButtonContainer: {
+      marginHorizontal: 12,
+    },
     expoundButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.primaryContainer,
-      marginHorizontal: 8,
-      marginBottom: 8,
-      paddingVertical: 12,
-      paddingHorizontal: 16,
+      justifyContent: 'center',
+      backgroundColor: theme.colors.surface,
       borderRadius: 16,
-      elevation: 2,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
     },
     expoundButtonText: {
-      marginLeft: 12,
+      marginLeft: 8,
       fontSize: 16,
       fontWeight: 'bold',
-      color: theme.colors.onPrimaryContainer,
-      flex: 1,
+      color: theme.colors.onSurface,
+      flexShrink: 1,
     },
     chaptersContainer: {
       paddingVertical: 10,
@@ -273,9 +278,9 @@ export default function BibleScreen() {
           visible={isHighlightMenuVisible}
           onDismiss={closeHighlightMenu}
           anchor={
-            <Pressable style={styles.actionItemContainer} onPress={openHighlightMenu}>
+            <Pressable style={styles.actionButton} onPress={openHighlightMenu}>
               <MaterialIcons name="highlight" size={20} color={theme.colors.onSurface} />
-              <Text style={styles.actionItemText}>Highlight</Text>
+              <Text style={styles.actionButtonText}>Highlight</Text>
             </Pressable>
           }
         >
@@ -333,28 +338,27 @@ export default function BibleScreen() {
         )}
         {selectedVerses.length > 0 ? (
           <View style={styles.selectionOptionsBar}>
-            <IconButton
-              icon="close"
-              style={styles.closeButton}
-              onPress={() => setSelectedVerses([])}
-            />
+            <View style={styles.pullDownHandle} />
+
+            <View style={styles.expoundButtonContainer}>
+              <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
+                <MaterialIcons name="manage-search" size={24} color={theme.colors.onSurface} />
+                <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
+              </Pressable>
+            </View>
+
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
               {firstRowActions.map((action, index) =>
                 action.menu ? (
                   action.menu
                 ) : (
-                  <Pressable key={index} style={styles.actionItemContainer} onPress={action.onPress}>
+                  <Pressable key={index} style={styles.actionButton} onPress={action.onPress}>
                     <MaterialIcons name={action.icon} size={20} color={theme.colors.onSurface} />
-                    <Text style={styles.actionItemText}>{action.label}</Text>
+                    <Text style={styles.actionButtonText}>{action.label}</Text>
                   </Pressable>
                 )
               )}
             </ScrollView>
-
-            <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
-              <MaterialIcons name="manage-search" size={24} color={theme.colors.onPrimaryContainer} />
-              <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
-            </Pressable>
           </View>
         ) : (
           <>
