@@ -3,14 +3,14 @@ import { Tabs } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, View, useWindowDimensions } from 'react-native';
 import {
-    Appbar,
-    Button,
-    Divider,
-    IconButton,
-    List,
-    Menu,
-    Text,
-    useTheme,
+  Appbar,
+  Button,
+  Divider,
+  IconButton,
+  List,
+  Menu,
+  Text,
+  useTheme,
 } from 'react-native-paper';
 import { useBible } from '../context/BibleProvider';
 import { useThemeContext } from '../context/ThemeProvider';
@@ -160,7 +160,7 @@ function BibleHeader() {
                 {selectedTranslation}
               </Button>
             }
-            style={{ marginTop: 40 }}
+            style={{ marginTop: 40, width: 290 }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
               borderRadius: 12,
