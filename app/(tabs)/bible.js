@@ -204,12 +204,37 @@ export default function BibleScreen() {
 
   const getVerseRange = (verses) => {
     if (!verses || verses.length === 0) return '';
-    const firstVerse = verses[0].verse;
-    const lastVerse = verses[verses.length - 1].verse;
-    if (firstVerse === lastVerse) {
-      return `${firstVerse}`;
+    const verseNumbers = verses.map((v) => v.verse);
+
+    if (verseNumbers.length === 1) {
+      return verseNumbers[0];
     }
-    return `${firstVerse}-${lastVerse}`;
+
+    const ranges = [];
+    let start = verseNumbers[0];
+    let end = verseNumbers[0];
+
+    for (let i = 1; i < verseNumbers.length; i++) {
+      if (verseNumbers[i] === end + 1) {
+        end = verseNumbers[i];
+      } else {
+        if (start === end) {
+          ranges.push(start.toString());
+        } else {
+          ranges.push(`${start}-${end}`);
+        }
+        start = verseNumbers[i];
+        end = verseNumbers[i];
+      }
+    }
+
+    if (start === end) {
+      ranges.push(start.toString());
+    } else {
+      ranges.push(`${start}-${end}`);
+    }
+
+    return ranges.join(', ');
   };
 
   const verseRef = `${selectedBook?.name} ${selectedChapter}:${getVerseRange(selectedVerses)}`;
