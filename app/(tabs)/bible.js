@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import {
   FAB,
   IconButton,
+  Menu,
   Paragraph,
   Portal,
   Text,
@@ -95,11 +96,29 @@ const getStyles = (theme) =>
       elevation: 4,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: theme.colors.outline,
+      paddingTop: 30,
     },
-    selectionOptionsBarRow: {
+    closeButton: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+    },
+    actionsScrollView: {
+      paddingHorizontal: 8,
+    },
+    actionItemContainer: {
       flexDirection: 'row',
-      justifyContent: 'space-evenly',
       alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      marginHorizontal: 4,
+    },
+    actionItemText: {
+      marginLeft: 8,
+      fontWeight: 'bold',
+      color: theme.colors.onSurface,
     },
     expoundButton: {
       flexDirection: 'row',
@@ -158,6 +177,7 @@ export default function BibleScreen() {
 
   const [selectedVerses, setSelectedVerses] = useState([]);
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
+  const [isHighlightMenuVisible, setHighlightMenuVisible] = useState(false);
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
@@ -202,6 +222,9 @@ export default function BibleScreen() {
   const showBottomSheet = () => setBottomSheetVisible(true);
   const hideBottomSheet = () => setBottomSheetVisible(false);
 
+  const openHighlightMenu = () => setHighlightMenuVisible(true);
+  const closeHighlightMenu = () => setHighlightMenuVisible(false);
+
   const getVerseRange = (verses) => {
     if (!verses || verses.length === 0) return '';
     const verseNumbers = verses.map((v) => v.verse);
@@ -239,6 +262,34 @@ export default function BibleScreen() {
 
   const verseRef = `${selectedBook?.name} ${selectedChapter}:${getVerseRange(selectedVerses)}`;
   const expoundText = `Expound on ${verseRef}`;
+
+  const firstRowActions = [
+    {
+      label: 'Highlight',
+      icon: 'highlight',
+      onPress: openHighlightMenu,
+      menu: (
+        <Menu
+          visible={isHighlightMenuVisible}
+          onDismiss={closeHighlightMenu}
+          anchor={
+            <Pressable style={styles.actionItemContainer} onPress={openHighlightMenu}>
+              <MaterialIcons name="highlight" size={20} color={theme.colors.onSurface} />
+              <Text style={styles.actionItemText}>Highlight</Text>
+            </Pressable>
+          }
+        >
+          <Menu.Item onPress={() => {}} title="Yellow" leadingIcon={() => <View style={{width: 16, height: 16, borderRadius: 8, backgroundColor: 'yellow'}} />} />
+          <Menu.Item onPress={() => {}} title="Blue" leadingIcon={() => <View style={{width: 16, height: 16, borderRadius: 8, backgroundColor: 'lightblue'}} />} />
+          <Menu.Item onPress={() => {}} title="Green" leadingIcon={() => <View style={{width: 16, height: 16, borderRadius: 8, backgroundColor: 'lightgreen'}} />} />
+        </Menu>
+      ),
+    },
+    { label: 'Notes', icon: 'edit-note', onPress: () => {} },
+    { label: 'Copy', icon: 'content-copy', onPress: () => {} },
+    { label: 'Share', icon: 'share', onPress: () => {} },
+    { label: 'Bookmark', icon: 'bookmark-border', onPress: () => {} },
+  ];
 
   return (
     <Portal.Host>
@@ -282,12 +333,24 @@ export default function BibleScreen() {
         )}
         {selectedVerses.length > 0 ? (
           <View style={styles.selectionOptionsBar}>
-            <View style={styles.selectionOptionsBarRow}>
-              <IconButton icon="content-copy" onPress={() => {}} />
-              <IconButton icon="share-variant" onPress={() => {}} />
-              <IconButton icon="bookmark-outline" onPress={() => {}} />
-              <IconButton icon="close" onPress={() => setSelectedVerses([])} />
-            </View>
+            <IconButton
+              icon="close"
+              style={styles.closeButton}
+              onPress={() => setSelectedVerses([])}
+            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
+              {firstRowActions.map((action, index) =>
+                action.menu ? (
+                  action.menu
+                ) : (
+                  <Pressable key={index} style={styles.actionItemContainer} onPress={action.onPress}>
+                    <MaterialIcons name={action.icon} size={20} color={theme.colors.onSurface} />
+                    <Text style={styles.actionItemText}>{action.label}</Text>
+                  </Pressable>
+                )
+              )}
+            </ScrollView>
+
             <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
               <MaterialIcons name="manage-search" size={24} color={theme.colors.onPrimaryContainer} />
               <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
