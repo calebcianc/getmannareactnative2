@@ -45,7 +45,7 @@ const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book, chapter 
       setConversationText('');
       setFollowUpQuestion('');
     }
-  }, [visible, height, translateY]);
+  }, [visible, height]);
 
   const handleStreamResponse = async (prompt) => {
     setIsStreaming(true);
@@ -122,7 +122,6 @@ const getStyles = (theme) =>
     modalContainer: {
       flex: 1,
       justifyContent: 'flex-end',
-      backgroundColor: 'transparent',
     },
     container: {
       backgroundColor: theme.colors.surfaceVariant,
