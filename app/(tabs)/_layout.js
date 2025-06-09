@@ -1,13 +1,15 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { useState } from 'react';
+import { FlatList, Pressable, View, useWindowDimensions } from 'react-native';
 import {
     Appbar,
+    Button,
     Divider,
     IconButton,
+    List,
     Menu,
-    SegmentedButtons,
+    Text,
     useTheme,
 } from 'react-native-paper';
 import { useBible } from '../context/BibleProvider';
@@ -16,30 +18,75 @@ import { useThemeContext } from '../context/ThemeProvider';
 function BibleHeader() {
   const {
     selectedBook,
+    setSelectedBook,
     selectedChapter,
+    setSelectedChapter,
     selectedTranslation,
-    setBookModalVisible,
-    setTranslationModalVisible,
-    isBookModalVisible,
-    isTranslationModalVisible,
+    setSelectedTranslation,
     increaseFontSize,
     decreaseFontSize,
     increaseLineHeight,
     decreaseLineHeight,
+    books,
+    translations,
+    setScrollPosition,
   } = useBible();
-  const [value, setValue] = useState('');
+  const { height } = useWindowDimensions();
   const { toggleTheme, isDarkTheme } = useThemeContext();
   const theme = useTheme();
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [fontMenuVisible, setFontMenuVisible] = useState(false);
+  const [bookMenuVisible, setBookMenuVisible] = useState(false);
+  const [translationMenuVisible, setTranslationMenuVisible] = useState(false);
+  const [tempSelectedBook, setTempSelectedBook] = useState(null);
 
-  const openMenu = () => setMenuVisible(true);
-  const closeMenu = () => setMenuVisible(false);
+  const openFontMenu = () => setFontMenuVisible(true);
+  const closeFontMenu = () => setFontMenuVisible(false);
 
-  useEffect(() => {
-    if (!isBookModalVisible && !isTranslationModalVisible) {
-      setValue('');
-    }
-  }, [isBookModalVisible, isTranslationModalVisible]);
+  const openBookMenu = () => setBookMenuVisible(true);
+  const closeBookMenu = () => {
+    setBookMenuVisible(false);
+    setTempSelectedBook(null);
+  }
+
+  const openTranslationMenu = () => setTranslationMenuVisible(true);
+  const closeTranslationMenu = () => setTranslationMenuVisible(false);
+
+  const onSelectBook = (book) => {
+    setTempSelectedBook(book);
+  };
+
+  const onSelectChapter = (chapter) => {
+    setSelectedBook(tempSelectedBook);
+    setScrollPosition(0);
+    setSelectedChapter(chapter);
+    closeBookMenu();
+  };
+
+  const onSelectTranslation = (translation) => {
+    setSelectedTranslation(translation.short_name);
+    closeTranslationMenu();
+  };
+
+  const renderChapterItem = ({ item }) => (
+    <Pressable
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        margin: 5,
+        borderRadius: 8,
+        backgroundColor: theme.colors.surfaceVariant,
+      }}
+      onPress={() => onSelectChapter(item)}
+    >
+      <Text style={{
+        fontSize: 16,
+        fontWeight: '500',
+        color: theme.colors.onSurfaceVariant,
+      }}>{item}</Text>
+    </Pressable>
+  );
 
   return (
     <Appbar.Header
@@ -47,94 +94,144 @@ function BibleHeader() {
         backgroundColor: theme.colors.surface,
         borderBottomWidth: 1,
         borderBottomColor: theme.colors.outlineVariant,
-        justifyContent: 'space-between',
       }}
     >
-      <View style={{ paddingHorizontal: 8 }}>
-        <SegmentedButtons
-          value={value}
-          onValueChange={(newValue) => {
-            setValue(newValue);
-            if (newValue === 'book') {
-              setBookModalVisible(true);
-            } else if (newValue === 'translation') {
-              setTranslationModalVisible(true);
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8 }}>
+          <Menu
+            visible={bookMenuVisible}
+            onDismiss={closeBookMenu}
+            anchor={
+              <Button
+                onPress={openBookMenu}
+                disabled={translationMenuVisible}
+                mode="outlined"
+                style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRightWidth: 0.5 }}
+              >
+                {selectedBook ? `${selectedBook.name} ${selectedChapter}` : 'Select Book'}
+              </Button>
             }
-          }}
-          buttons={[
-            {
-              value: 'book',
-              label: selectedBook
-                ? `${selectedBook.name} ${selectedChapter}`
-                : 'Select Book',
-              disabled: isTranslationModalVisible,
-              style: {
-                flex: 1.5,
-              },
-            },
-            {
-              value: 'translation',
-              label: selectedTranslation,
-              disabled: isBookModalVisible,
-              style: {
-                flex: 1,
-              },
-            },
-          ]}
-        />
-      </View>
-      <View style={{ flexDirection: 'row' }}>
-        <Appbar.Action icon="magnify" onPress={() => {}} />
-        <Appbar.Action
-          icon={isDarkTheme ? 'white-balance-sunny' : 'moon-waning-crescent'}
-          onPress={toggleTheme}
-        />
-        <Menu
-          visible={menuVisible}
-          onDismiss={closeMenu}
-          anchor={<Appbar.Action icon="format-font" onPress={openMenu} />}
-          style={{ marginTop: 40 }}
-          contentStyle={{
-            backgroundColor: theme.colors.surface,
-            borderRadius: 12,
-          }}
-        >
-          <View style={{ paddingVertical: 8 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-evenly',
-                alignItems: 'center',
-              }}
-            >
-              <IconButton
-                icon="format-font-size-decrease"
-                onPress={decreaseFontSize}
-              />
-              <IconButton
-                icon="format-font-size-increase"
-                onPress={increaseFontSize}
-              />
+            style={{ marginTop: 40, width: '90%', }}
+            contentStyle={{
+              backgroundColor: theme.colors.surface,
+              borderRadius: 12,
+            }}
+          >
+            {!tempSelectedBook ? (
+              <View style={{ maxHeight: height * 0.5 }}>
+                <FlatList
+                  key="book-list"
+                  data={books}
+                  keyExtractor={(item) => item.bookid.toString()}
+                  renderItem={({ item }) => (
+                    <List.Item title={item.name} onPress={() => onSelectBook(item)} />
+                  )}
+                />
+              </View>
+            ) : (
+              <View style={{ maxHeight: height * 0.7 }}>
+                 <Menu.Item title={tempSelectedBook.name} onPress={() => setTempSelectedBook(null)} />
+                 <Divider />
+                <FlatList
+                  key="chapter-list"
+                  data={Array.from(
+                    { length: tempSelectedBook.chapters || 0 },
+                    (_, i) => i + 1
+                  )}
+                  renderItem={renderChapterItem}
+                  keyExtractor={(item) => item.toString()}
+                  numColumns={5}
+                  contentContainerStyle={{ padding: 10, }}
+                />
+              </View>
+            )}
+          </Menu>
+
+          <Menu
+            visible={translationMenuVisible}
+            onDismiss={closeTranslationMenu}
+            anchor={
+              <Button
+                onPress={openTranslationMenu}
+                disabled={bookMenuVisible}
+                mode="outlined"
+                style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeftWidth: 0.5 }}
+              >
+                {selectedTranslation}
+              </Button>
+            }
+            style={{ marginTop: 40 }}
+            contentStyle={{
+              backgroundColor: theme.colors.surface,
+              borderRadius: 12,
+            }}
+          >
+            <FlatList
+              data={translations}
+              keyExtractor={(item) => item.short_name}
+              renderItem={({ item }) => (
+                <List.Item
+                  title={`${item.short_name} - ${item.full_name}`}
+                  onPress={() => onSelectTranslation(item)}
+                />
+              )}
+            />
+          </Menu>
+        </View>
+
+        <View style={{ flexDirection: 'row' }}>
+          <Appbar.Action icon="magnify" onPress={() => {}} />
+          <Appbar.Action
+            icon={isDarkTheme ? 'white-balance-sunny' : 'moon-waning-crescent'}
+            onPress={toggleTheme}
+          />
+          <Menu
+            visible={fontMenuVisible}
+            onDismiss={closeFontMenu}
+            anchor={<Appbar.Action icon="format-font" onPress={openFontMenu} />}
+            style={{ marginTop: 40 }}
+            contentStyle={{
+              backgroundColor: theme.colors.surface,
+              borderRadius: 12,
+            }}
+          >
+            <View style={{ paddingVertical: 8 }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-evenly',
+                  alignItems: 'center',
+                }}
+              >
+                <IconButton
+                  icon="format-font-size-decrease"
+                  onPress={decreaseFontSize}
+                />
+                <IconButton
+                  icon="format-font-size-increase"
+                  onPress={increaseFontSize}
+                />
+              </View>
+              <Divider style={{ marginVertical: 8 }} />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-evenly',
+                  alignItems: 'center',
+                }}
+              >
+                <IconButton
+                  icon="arrow-collapse-vertical"
+                  onPress={decreaseLineHeight}
+                />
+                <IconButton
+                  icon="arrow-expand-vertical"
+                  onPress={increaseLineHeight}
+                />
+              </View>
             </View>
-            <Divider style={{ marginVertical: 8 }} />
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-evenly',
-                alignItems: 'center',
-              }}
-            >
-              <IconButton
-                icon="arrow-collapse-vertical"
-                onPress={decreaseLineHeight}
-              />
-              <IconButton
-                icon="arrow-expand-vertical"
-                onPress={increaseLineHeight}
-              />
-            </View>
-          </View>
-        </Menu>
+          </Menu>
+        </View>
       </View>
     </Appbar.Header>
   );

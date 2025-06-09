@@ -1,16 +1,14 @@
 import { decode } from 'html-entities';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import {
   FAB,
   IconButton,
-  List,
   Paragraph,
   Portal,
   Text,
-  useTheme,
+  useTheme
 } from 'react-native-paper';
-import SelectionModal from '../components/SelectionModal';
 import { useBible } from '../context/BibleProvider';
 
 const toSuperscript = (str) => {
@@ -128,13 +126,7 @@ export default function BibleScreen() {
     setSelectedBook,
     selectedChapter,
     setSelectedChapter,
-    setSelectedTranslation,
-    isBookModalVisible,
-    setBookModalVisible,
-    isTranslationModalVisible,
-    setTranslationModalVisible,
     books,
-    translations,
     scrollPosition,
     setScrollPosition,
     fontSize,
@@ -142,7 +134,6 @@ export default function BibleScreen() {
     fontFamily,
   } = useBible();
 
-  const [tempSelectedBook, setTempSelectedBook] = useState(null);
   const [selectedVerses, setSelectedVerses] = useState([]);
   const scrollViewRef = useRef(null);
 
@@ -184,65 +175,6 @@ export default function BibleScreen() {
       }
     });
   };
-
-  const onSelectBook = (book) => {
-    setTempSelectedBook(book);
-  };
-  
-  const onSelectChapter = (chapter) => {
-    setSelectedBook(tempSelectedBook);
-    setScrollPosition(0);
-    setSelectedChapter(chapter);
-    setBookModalVisible(false);
-    setTempSelectedBook(null);
-  };
-
-  const onSelectTranslation = (translation) => {
-    setSelectedTranslation(translation.short_name);
-    setTranslationModalVisible(false);
-  };
-
-  const renderChapterItem = ({ item }) => (
-    <Pressable
-      style={styles.chapterItemContainer}
-      onPress={() => onSelectChapter(item)}
-    >
-      <Text style={styles.chapterItem}>{item}</Text>
-    </Pressable>
-  );
-
-  const closeBookSelectionModal = () => {
-    setBookModalVisible(false);
-    setTempSelectedBook(null);
-  };
-
-  let bookModalContent;
-  if (!tempSelectedBook) {
-    bookModalContent = (
-      <FlatList
-        key="book-list"
-        data={books}
-        keyExtractor={(item) => item.bookid.toString()}
-        renderItem={({ item }) => (
-          <List.Item title={item.name} onPress={() => onSelectBook(item)} />
-        )}
-      />
-    );
-  } else {
-    bookModalContent = (
-      <FlatList
-        key="chapter-list"
-        data={Array.from(
-          { length: tempSelectedBook.chapters || 0 },
-          (_, i) => i + 1
-        )}
-        renderItem={renderChapterItem}
-        keyExtractor={(item) => item.toString()}
-        numColumns={5}
-        contentContainerStyle={styles.chaptersContainer}
-      />
-    );
-  }
 
   return (
     <Portal.Host>
@@ -311,30 +243,6 @@ export default function BibleScreen() {
             />
           </>
         )}
-        <SelectionModal
-          visible={isBookModalVisible}
-          onDismiss={closeBookSelectionModal}
-          title={!tempSelectedBook ? 'Select Book' : `Select Chapter for ${tempSelectedBook.name}`}
-        >
-          {bookModalContent}
-        </SelectionModal>
-
-        <SelectionModal
-          visible={isTranslationModalVisible}
-          onDismiss={() => setTranslationModalVisible(false)}
-          title="Select Translation"
-        >
-          <FlatList
-            data={translations}
-            keyExtractor={(item) => item.short_name}
-            renderItem={({ item }) => (
-              <List.Item
-                title={`${item.short_name} - ${item.full_name}`}
-                onPress={() => onSelectTranslation(item)}
-              />
-            )}
-          />
-        </SelectionModal>
       </View>
     </Portal.Host>
   );
