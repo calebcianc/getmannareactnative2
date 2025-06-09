@@ -2,7 +2,14 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Appbar, Menu, SegmentedButtons, useTheme } from 'react-native-paper';
+import {
+    Appbar,
+    Divider,
+    IconButton,
+    Menu,
+    SegmentedButtons,
+    useTheme,
+} from 'react-native-paper';
 import { useBible } from '../context/BibleProvider';
 import { useThemeContext } from '../context/ThemeProvider';
 
@@ -19,7 +26,6 @@ function BibleHeader() {
     decreaseFontSize,
     increaseLineHeight,
     decreaseLineHeight,
-    setFontFamily,
   } = useBible();
   const [value, setValue] = useState('');
   const { toggleTheme, isDarkTheme } = useThemeContext();
@@ -87,20 +93,47 @@ function BibleHeader() {
           visible={menuVisible}
           onDismiss={closeMenu}
           anchor={<Appbar.Action icon="format-font" onPress={openMenu} />}
+          style={{ marginTop: 40 }}
+          contentStyle={{
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+          }}
         >
-          <Menu.Item onPress={increaseFontSize} title="Increase Font Size" />
-          <Menu.Item onPress={decreaseFontSize} title="Decrease Font Size" />
-          <Menu.Item onPress={increaseLineHeight} title="Increase Line Spacing" />
-          <Menu.Item onPress={decreaseLineHeight} title="Decrease Line Spacing" />
-          <Menu.Item onPress={() => setFontFamily('serif')} title="Serif Font" />
-          <Menu.Item
-            onPress={() => setFontFamily('sans-serif')}
-            title="Sans-Serif Font"
-          />
-          <Menu.Item
-            onPress={() => setFontFamily(undefined)}
-            title="Default Font"
-          />
+          <View style={{ paddingVertical: 8 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+                alignItems: 'center',
+              }}
+            >
+              <IconButton
+                icon="format-font-size-decrease"
+                onPress={decreaseFontSize}
+              />
+              <IconButton
+                icon="format-font-size-increase"
+                onPress={increaseFontSize}
+              />
+            </View>
+            <Divider style={{ marginVertical: 8 }} />
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-evenly',
+                alignItems: 'center',
+              }}
+            >
+              <IconButton
+                icon="arrow-collapse-vertical"
+                onPress={decreaseLineHeight}
+              />
+              <IconButton
+                icon="arrow-expand-vertical"
+                onPress={increaseLineHeight}
+              />
+            </View>
+          </View>
         </Menu>
       </View>
     </Appbar.Header>

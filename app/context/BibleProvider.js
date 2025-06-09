@@ -116,7 +116,6 @@ export function BibleProvider({ children }) {
     decreaseFontSize,
     increaseLineHeight,
     decreaseLineHeight,
-    setFontFamily,
   };
 
   return (
