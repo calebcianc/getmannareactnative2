@@ -1,16 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { ActivityIndicator, IconButton, Modal, Portal, Text, TextInput, useTheme } from 'react-native-paper';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { startChat, streamGeminiResponseFromChat } from '../utils/gemini';
 
 const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book, chapter }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
+  const { height } = useWindowDimensions();
   const [conversationText, setConversationText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [followUpQuestion, setFollowUpQuestion] = useState('');
   const chatRef = useRef(null);
   const scrollViewRef = useRef(null);
+  const translateY = useSharedValue(height);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
+  });
 
   const getVerseRange = () => {
     if (!selectedVerses || selectedVerses.length === 0) return '';
@@ -27,14 +36,16 @@ const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book, chapter 
 
   useEffect(() => {
     if (visible) {
+      translateY.value = withSpring(0, { damping: 15 });
       chatRef.current = startChat();
       const initialPrompt = `Expound on ${verseRef}`;
       handleStreamResponse(initialPrompt);
     } else {
+      translateY.value = withTiming(height, { duration: 300 });
       setConversationText('');
       setFollowUpQuestion('');
     }
-  }, [visible]);
+  }, [visible, height, translateY]);
 
   const handleStreamResponse = async (prompt) => {
     setIsStreaming(true);
@@ -69,7 +80,7 @@ const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book, chapter 
         onDismiss={onDismiss}
         contentContainerStyle={styles.modalContainer}
       >
-        <View style={styles.container}>
+        <Animated.View style={[styles.container, animatedStyle]}>
           <IconButton
             icon="close"
             size={24}
@@ -100,7 +111,7 @@ const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book, chapter 
               style={styles.sendButton}
             />
           </View>
-        </View>
+        </Animated.View>
       </Modal>
     </Portal>
   );

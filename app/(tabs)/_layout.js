@@ -90,24 +90,19 @@ function BibleHeader() {
     </Pressable>
   );
 
-  const headerButtonStyles = {
-    labelStyle: {
-      fontSize: 16,
-      fontWeight: '600',
-    },
+  const bookButtonStyle = {
     borderTopRightRadius: 0,
     borderBottomRightRadius: 0,
     borderRightWidth: 0.5,
   };
-
-  const translationButtonStyles = {
-    ...headerButtonStyles,
+  const translationButtonStyle = {
     borderTopLeftRadius: 0,
     borderBottomLeftRadius: 0,
     borderLeftWidth: 0.5,
-    borderTopRightRadius: 4, // Default
-    borderBottomRightRadius: 4, // Default
-    borderRightWidth: 1, // Default
+  };
+  const buttonLabelStyle = {
+    fontSize: 16,
+    fontWeight: '600',
   };
 
   return (
@@ -128,13 +123,13 @@ function BibleHeader() {
                 onPress={openBookMenu}
                 disabled={translationMenuVisible}
                 mode="outlined"
-                style={headerButtonStyles}
-                labelStyle={headerButtonStyles.labelStyle}
+                style={bookButtonStyle}
+                labelStyle={buttonLabelStyle}
               >
                 {selectedBook ? `${selectedBook.name} ${selectedChapter}` : 'Select Book'}
               </Button>
             }
-            style={{ marginTop: 40, width: '90%', }}
+            style={{ marginTop: 52, width: '90%' }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
               borderRadius: 12,
@@ -178,13 +173,13 @@ function BibleHeader() {
                 onPress={openTranslationMenu}
                 disabled={bookMenuVisible}
                 mode="outlined"
-                style={translationButtonStyles}
-                labelStyle={translationButtonStyles.labelStyle}
+                style={translationButtonStyle}
+                labelStyle={buttonLabelStyle}
               >
                 {selectedTranslation}
               </Button>
             }
-            style={{ marginTop: 40, width: 290 }}
+            style={{ marginTop: 52, width: 290 }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
               borderRadius: 12,

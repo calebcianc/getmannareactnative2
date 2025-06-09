@@ -176,7 +176,7 @@ const getStyles = (theme) =>
     },
   });
 
-export default function BibleScreen() {
+const BibleScreen = () => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const {
@@ -192,6 +192,7 @@ export default function BibleScreen() {
     fontSize,
     lineHeight,
     fontFamily,
+    selectedTranslation,
   } = useBible();
 
   const [selectedVerses, setSelectedVerses] = useState([]);
@@ -235,6 +236,10 @@ export default function BibleScreen() {
   }, [selectedVerses]);
 
   useEffect(() => {
+    setSelectedVerses([]);
+  }, [selectedBook, selectedChapter, selectedTranslation]);
+
+  useEffect(() => {
     if (!loading && scrollViewRef.current) {
       setTimeout(() => {
         if (scrollViewRef.current) {
@@ -258,6 +263,13 @@ export default function BibleScreen() {
     }
   };
 
+  const flingLeft = Gesture.Fling()
+    .direction(Gesture.RIGHT)
+    .onEnd(handlePrevChapter);
+  const flingRight = Gesture.Fling()
+    .direction(Gesture.LEFT)
+    .onEnd(handleNextChapter);
+
   const handleVersePress = (verse) => {
     setSelectedVerses((prevSelectedVerses) => {
       const isSelected = prevSelectedVerses.some(
@@ -274,7 +286,10 @@ export default function BibleScreen() {
   };
 
   const showBottomSheet = () => setBottomSheetVisible(true);
-  const hideBottomSheet = () => setBottomSheetVisible(false);
+  const hideBottomSheet = () => {
+    setBottomSheetVisible(false);
+    setSelectedVerses([]);
+  };
 
   const openHighlightMenu = () => setHighlightMenuVisible(true);
   const closeHighlightMenu = () => setHighlightMenuVisible(false);
@@ -350,39 +365,41 @@ export default function BibleScreen() {
       {loading ? (
         <ActivityIndicator size="large" style={styles.loader} />
       ) : (
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.content}
-          onScroll={(e) => setScrollPosition(e.nativeEvent.contentOffset.y)}
-          scrollEventThrottle={16}
-        >
-          <Paragraph
-            style={[
-              styles.paragraph,
-              { fontSize, lineHeight, fontFamily },
-            ]}
+        <GestureDetector gesture={Gesture.Simultaneous(flingLeft, flingRight)}>
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={styles.content}
+            onScroll={(e) => setScrollPosition(e.nativeEvent.contentOffset.y)}
+            scrollEventThrottle={16}
           >
-            {verses.map((verse, index) => {
-              const isSelected = selectedVerses.some(
-                (v) => v.verse === verse.verse
-              );
+            <Paragraph
+              style={[
+                styles.paragraph,
+                { fontSize, lineHeight, fontFamily },
+              ]}
+            >
+              {verses.map((verse, index) => {
+                const isSelected = selectedVerses.some(
+                  (v) => v.verse === verse.verse
+                );
 
-              return (
-                <Text
-                  key={verse.verse}
-                  style={isSelected ? styles.selectedVerse : {}}
-                  onPress={() => handleVersePress(verse)}
-                >
-                  {index > 0 && ' '}
-                  <Text style={styles.verseNumber}>
-                    {toSuperscript(verse.verse)}{' '}
+                return (
+                  <Text
+                    key={verse.verse}
+                    style={isSelected ? styles.selectedVerse : {}}
+                    onPress={() => handleVersePress(verse)}
+                  >
+                    {index > 0 && ' '}
+                    <Text style={styles.verseNumber}>
+                      {toSuperscript(verse.verse)}{' '}
+                    </Text>
+                    {decode(verse.text.replace(/<[^>]+>/g, ''))}
                   </Text>
-                  {decode(verse.text.replace(/<[^>]+>/g, ''))}
-                </Text>
-              );
-            })}
-          </Paragraph>
-        </ScrollView>
+                );
+              })}
+            </Paragraph>
+          </ScrollView>
+        </GestureDetector>
       )}
       {selectedVerses.length > 0 ? (
         <GestureDetector gesture={panGesture}>
@@ -439,4 +456,6 @@ export default function BibleScreen() {
       />
     </View>
   );
-} 
+}
+
+export default BibleScreen; 
