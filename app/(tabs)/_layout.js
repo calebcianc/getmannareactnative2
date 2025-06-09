@@ -14,6 +14,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BookName } from '../components/BookName';
 import { useBible } from '../context/BibleProvider';
 import { useThemeContext } from '../context/ThemeProvider';
 
@@ -141,7 +142,15 @@ function BibleHeader() {
                 style={bookButtonStyle}
                 labelStyle={buttonLabelStyle}
               >
-                {selectedBook ? `${selectedBook.name} ${selectedChapter}` : 'Select Book'}
+                {selectedBook ? (
+                  <BookName
+                    book={selectedBook}
+                    chapter={selectedChapter}
+                    style={buttonLabelStyle}
+                  />
+                ) : (
+                  'Select Book'
+                )}
               </Button>
             }
             style={{ marginTop: 52, width: '90%' }}
@@ -194,7 +203,7 @@ function BibleHeader() {
                 {selectedTranslation}
               </Button>
             }
-            style={{ marginTop: 52, width: 290 }}
+            style={{ marginTop: 52, width: 250 }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
               borderRadius: 12,
