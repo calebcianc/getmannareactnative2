@@ -13,8 +13,15 @@ import { ThemeProvider, useThemeContext } from './context/ThemeProvider';
 
 SplashScreen.preventAutoHideAsync();
 
-function RootLayout() {
-  const { theme } = useThemeContext();
+function RootLayoutNav() {
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+
+export default function Layout() {
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_700Bold,
@@ -31,20 +38,21 @@ function RootLayout() {
   }
 
   return (
-    <PaperProvider theme={theme}>
-      <Stack screenOptions={{ headerShown: false }} />
-    </PaperProvider>
-  );
-}
-
-export default function Layout() {
-  return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <BibleProvider>
-          <RootLayout />
+          <ThemedRoot />
         </BibleProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function ThemedRoot() {
+  const { theme } = useThemeContext();
+  return (
+    <PaperProvider theme={theme}>
+      <RootLayoutNav />
+    </PaperProvider>
   );
 } 

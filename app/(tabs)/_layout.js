@@ -9,9 +9,11 @@ import {
   IconButton,
   List,
   Menu,
+  Portal,
   Text,
   useTheme,
 } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBible } from '../context/BibleProvider';
 import { useThemeContext } from '../context/ThemeProvider';
 
@@ -88,6 +90,26 @@ function BibleHeader() {
     </Pressable>
   );
 
+  const headerButtonStyles = {
+    labelStyle: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    borderRightWidth: 0.5,
+  };
+
+  const translationButtonStyles = {
+    ...headerButtonStyles,
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+    borderLeftWidth: 0.5,
+    borderTopRightRadius: 4, // Default
+    borderBottomRightRadius: 4, // Default
+    borderRightWidth: 1, // Default
+  };
+
   return (
     <Appbar.Header
       style={{
@@ -106,7 +128,8 @@ function BibleHeader() {
                 onPress={openBookMenu}
                 disabled={translationMenuVisible}
                 mode="outlined"
-                style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRightWidth: 0.5 }}
+                style={headerButtonStyles}
+                labelStyle={headerButtonStyles.labelStyle}
               >
                 {selectedBook ? `${selectedBook.name} ${selectedChapter}` : 'Select Book'}
               </Button>
@@ -155,7 +178,8 @@ function BibleHeader() {
                 onPress={openTranslationMenu}
                 disabled={bookMenuVisible}
                 mode="outlined"
-                style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeftWidth: 0.5 }}
+                style={translationButtonStyles}
+                labelStyle={translationButtonStyles.labelStyle}
               >
                 {selectedTranslation}
               </Button>
@@ -188,7 +212,7 @@ function BibleHeader() {
           <Menu
             visible={fontMenuVisible}
             onDismiss={closeFontMenu}
-            anchor={<Appbar.Action icon="format-font" onPress={openFontMenu} />}
+            anchor={<Appbar.Action icon="dots-vertical" onPress={openFontMenu} />}
             style={{ marginTop: 40 }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
@@ -239,55 +263,68 @@ function BibleHeader() {
 
 export default function TabsLayout() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.tertiary,
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.outlineVariant,
-          height: 80,
-          paddingTop: 10,
-          paddingBottom: 15,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="home" size={28} color={color} />
-          ),
+    <Portal.Host>
+      <Tabs
+        screenOptions={{
+          header: (props) => (props.route.name === 'bible' ? <BibleHeader /> : null),
+          tabBarActiveTintColor: '#000',
+          tabBarInactiveTintColor: '#8e8e93',
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: '600',
+          },
+          tabBarStyle: {
+            backgroundColor: theme.colors.surface,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.outlineVariant,
+            height: 55 + insets.bottom,
+            paddingBottom: insets.bottom,
+          },
         }}
-      />
-      <Tabs.Screen
-        name="bible"
-        options={{
-          title: 'Bible',
-          headerShown: true,
-          header: () => <BibleHeader />,
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="book" size={28} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="settings" size={28} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, size, focused }) => (
+              <MaterialIcons
+                name={focused ? 'home' : 'home'}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="bible"
+          options={{
+            title: 'Bible',
+            tabBarIcon: ({ color, size, focused }) => (
+              <MaterialIcons
+                name={focused ? 'book' : 'book'}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: 'Settings',
+            tabBarIcon: ({ color, size, focused }) => (
+              <MaterialIcons
+                name={focused ? 'settings' : 'settings'}
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+      </Tabs>
+    </Portal.Host>
   );
 } 

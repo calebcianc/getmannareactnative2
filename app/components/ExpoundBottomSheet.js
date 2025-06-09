@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, IconButton, Modal, Portal, Text, TextInput, useTheme } from 'react-native-paper';
 import { startChat, streamGeminiResponseFromChat } from '../utils/gemini';
 
-const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book }) => {
+const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book, chapter }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const [conversationText, setConversationText] = useState('');
@@ -22,7 +22,7 @@ const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book }) => {
     return `${firstVerse}-${lastVerse}`;
   };
 
-  const verseRef = `${book?.name} ${selectedVerses[0]?.chapter}:${getVerseRange()}`;
+  const verseRef = `${book?.name} ${chapter}:${getVerseRange()}`;
   const title = `Expound on ${verseRef}`;
 
   useEffect(() => {
@@ -81,15 +81,25 @@ const ExpoundBottomSheet = ({ visible, onDismiss, selectedVerses, book }) => {
             <Text>{conversationText}</Text>
             {isStreaming && <ActivityIndicator animating={true} style={{ marginVertical: 10 }} />}
           </ScrollView>
-          <TextInput
-            mode="outlined"
-            placeholder="Ask a follow-up question"
-            style={styles.textInput}
-            value={followUpQuestion}
-            onChangeText={setFollowUpQuestion}
-            onSubmitEditing={handleSendFollowUp}
-            disabled={isStreaming}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              mode="outlined"
+              placeholder="Ask a follow-up question"
+              style={styles.textInput}
+              value={followUpQuestion}
+              onChangeText={setFollowUpQuestion}
+              onSubmitEditing={handleSendFollowUp}
+              disabled={isStreaming}
+              outlineStyle={{ borderRadius: 24 }}
+            />
+            <IconButton
+              icon="send"
+              size={24}
+              onPress={handleSendFollowUp}
+              disabled={followUpQuestion.trim() === '' || isStreaming}
+              style={styles.sendButton}
+            />
+          </View>
         </View>
       </Modal>
     </Portal>
@@ -127,9 +137,16 @@ const getStyles = (theme) =>
       flex: 1,
       marginBottom: 20,
     },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     textInput: {
-      marginBottom: 20,
+      flex: 1,
       backgroundColor: theme.colors.surface,
+    },
+    sendButton: {
+      marginLeft: 8,
     },
   });
 

@@ -7,7 +7,6 @@ import {
   FAB,
   Menu,
   Paragraph,
-  Portal,
   Text,
   useTheme
 } from 'react-native-paper';
@@ -53,7 +52,7 @@ const getStyles = (theme) =>
     content: {
       paddingHorizontal: 20,
       paddingTop: 10,
-      paddingBottom: 100,
+      paddingBottom: 200,
     },
     paragraph: {
       fontSize: 18,
@@ -167,6 +166,13 @@ const getStyles = (theme) =>
       fontSize: 16,
       fontWeight: '500',
       color: theme.colors.onSurfaceVariant,
+    },
+    headerButtonText: {
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    headerRight: {
+      flexDirection: 'row',
     },
   });
 
@@ -340,98 +346,97 @@ export default function BibleScreen() {
   ];
 
   return (
-    <Portal.Host>
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        {loading ? (
-          <ActivityIndicator size="large" style={styles.loader} />
-        ) : (
-          <ScrollView
-            ref={scrollViewRef}
-            contentContainerStyle={styles.content}
-            onScroll={(e) => setScrollPosition(e.nativeEvent.contentOffset.y)}
-            scrollEventThrottle={16}
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {loading ? (
+        <ActivityIndicator size="large" style={styles.loader} />
+      ) : (
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.content}
+          onScroll={(e) => setScrollPosition(e.nativeEvent.contentOffset.y)}
+          scrollEventThrottle={16}
+        >
+          <Paragraph
+            style={[
+              styles.paragraph,
+              { fontSize, lineHeight, fontFamily },
+            ]}
           >
-            <Paragraph
-              style={[
-                styles.paragraph,
-                { fontSize, lineHeight, fontFamily },
-              ]}
-            >
-              {verses.map((verse, index) => {
-                const isSelected = selectedVerses.some(
-                  (v) => v.verse === verse.verse
-                );
+            {verses.map((verse, index) => {
+              const isSelected = selectedVerses.some(
+                (v) => v.verse === verse.verse
+              );
 
-                return (
-                  <Text
-                    key={verse.verse}
-                    style={isSelected ? styles.selectedVerse : {}}
-                    onPress={() => handleVersePress(verse)}
-                  >
-                    {index > 0 && ' '}
-                    <Text style={styles.verseNumber}>
-                      {toSuperscript(verse.verse)}{' '}
-                    </Text>
-                    {decode(verse.text.replace(/<[^>]+>/g, ''))}
+              return (
+                <Text
+                  key={verse.verse}
+                  style={isSelected ? styles.selectedVerse : {}}
+                  onPress={() => handleVersePress(verse)}
+                >
+                  {index > 0 && ' '}
+                  <Text style={styles.verseNumber}>
+                    {toSuperscript(verse.verse)}{' '}
                   </Text>
-                );
-              })}
-            </Paragraph>
-          </ScrollView>
-        )}
-        {selectedVerses.length > 0 ? (
-          <GestureDetector gesture={panGesture}>
-            <Animated.View style={[styles.selectionOptionsBar, animatedStyle]}>
-              <View style={styles.pullDownHandle} />
+                  {decode(verse.text.replace(/<[^>]+>/g, ''))}
+                </Text>
+              );
+            })}
+          </Paragraph>
+        </ScrollView>
+      )}
+      {selectedVerses.length > 0 ? (
+        <GestureDetector gesture={panGesture}>
+          <Animated.View style={[styles.selectionOptionsBar, animatedStyle]}>
+            <View style={styles.pullDownHandle} />
 
-              <View style={styles.expoundButtonContainer}>
-                <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
-                  <MaterialIcons name="manage-search" size={24} color={theme.colors.onSurface} />
-                  <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
-                </Pressable>
-              </View>
+            <View style={styles.expoundButtonContainer}>
+              <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
+                <MaterialIcons name="manage-search" size={24} color={theme.colors.onSurface} />
+                <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
+              </Pressable>
+            </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
-                {firstRowActions.map((action, index) =>
-                  action.menu ? (
-                    action.menu
-                  ) : (
-                    <Pressable key={index} style={styles.actionButton} onPress={action.onPress}>
-                      <MaterialIcons name={action.icon} size={20} color={theme.colors.onSurface} />
-                      <Text style={styles.actionButtonText}>{action.label}</Text>
-                    </Pressable>
-                  )
-                )}
-              </ScrollView>
-            </Animated.View>
-          </GestureDetector>
-        ) : (
-          <>
-            <FAB
-              icon="arrow-left"
-              style={styles.fabLeft}
-              onPress={handlePrevChapter}
-              disabled={loading || selectedChapter === 1}
-            />
-            <FAB
-              icon="arrow-right"
-              style={styles.fabRight}
-              onPress={handleNextChapter}
-              disabled={
-                loading ||
-                !selectedBook ||
-                selectedChapter === selectedBook.chapters
-              }
-            />
-          </>
-        )}
-        <ExpoundBottomSheet
-          visible={isBottomSheetVisible}
-          onDismiss={hideBottomSheet}
-          selectedVerses={selectedVerses}
-          book={selectedBook}
-        />
-      </View>
-    </Portal.Host>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
+              {firstRowActions.map((action, index) =>
+                action.menu ? (
+                  action.menu
+                ) : (
+                  <Pressable key={index} style={styles.actionButton} onPress={action.onPress}>
+                    <MaterialIcons name={action.icon} size={20} color={theme.colors.onSurface} />
+                    <Text style={styles.actionButtonText}>{action.label}</Text>
+                  </Pressable>
+                )
+              )}
+            </ScrollView>
+          </Animated.View>
+        </GestureDetector>
+      ) : (
+        <>
+          <FAB
+            icon="arrow-left"
+            style={styles.fabLeft}
+            onPress={handlePrevChapter}
+            disabled={loading || selectedChapter === 1}
+          />
+          <FAB
+            icon="arrow-right"
+            style={styles.fabRight}
+            onPress={handleNextChapter}
+            disabled={
+              loading ||
+              !selectedBook ||
+              selectedChapter === selectedBook.chapters
+            }
+          />
+        </>
+      )}
+      <ExpoundBottomSheet
+        visible={isBottomSheetVisible}
+        onDismiss={hideBottomSheet}
+        selectedVerses={selectedVerses}
+        book={selectedBook}
+        chapter={selectedChapter}
+      />
+    </View>
   );
 } 
