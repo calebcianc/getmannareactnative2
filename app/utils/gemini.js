@@ -1,25 +1,16 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// IMPORTANT: Replace with your actual API key
-const API_KEY = 'YOUR_API_KEY';
+const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+export const expoundVerse = async ({ book, chapter, verse }) => {
+  const prompt = `Expound on ${book} ${chapter}:${verse} reference`;
 
-export const startChat = () => {
-  return model.startChat({
-    history: [],
-  });
-};
-
-export const streamGeminiResponseFromChat = async (chat, prompt) => {
   try {
-    const result = await chat.sendMessageStream(prompt);
+    const result = await model.generateContentStream(prompt);
     return result.stream;
   } catch (error) {
-    console.error('Error generating content from Gemini:', error);
+    console.error("Error generating content from Gemini:", error);
     throw error;
   }
 };
-
-export default () => null; 
