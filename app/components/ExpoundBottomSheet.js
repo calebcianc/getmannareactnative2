@@ -3,8 +3,8 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
-  View,
   useWindowDimensions,
+  View,
 } from "react-native";
 import MarkdownDisplay from "react-native-markdown-display";
 import {
@@ -22,7 +22,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { expoundVerse } from "../utils/gemini";
+import { expoundVerse } from "../../utils/gemini";
 
 const ExpoundBottomSheet = ({
   visible,
@@ -38,6 +38,9 @@ const ExpoundBottomSheet = ({
   const [newMessage, setNewMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollViewRef = useRef(null);
+  const userMessageToScrollRef = useRef(null);
+  const messageRefs = useRef([]);
+  const headerRef = useRef(null);
   const translateY = useSharedValue(height);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -89,7 +92,6 @@ const ExpoundBottomSheet = ({
           lastMessage.content += chunkText;
           return newConversation;
         });
-        scrollViewRef.current?.scrollToEnd({ animated: true });
       }
     } catch (error) {
       setConversation((prev) => {
@@ -105,12 +107,14 @@ const ExpoundBottomSheet = ({
   };
 
   const handleSendMessage = () => {
-    if (newMessage.trim() === "") return;
+    if (newMessage.trim() === "" || isStreaming) return;
     const prompt = newMessage.trim();
     const newConversation = [
       ...conversation,
       { role: "user", content: prompt },
     ];
+    messageRefs.current = messageRefs.current.slice(0, newConversation.length);
+    userMessageToScrollRef.current = newConversation.length - 1;
     setConversation(newConversation);
     setNewMessage("");
     handleStreamResponse(newConversation);
@@ -124,7 +128,7 @@ const ExpoundBottomSheet = ({
         contentContainerStyle={styles.modalContainer}
       >
         <Animated.View style={[styles.container, animatedStyle]}>
-          <View style={styles.header}>
+          <View style={styles.header} ref={headerRef}>
             <IconButton
               icon="history"
               size={24}
@@ -146,35 +150,53 @@ const ExpoundBottomSheet = ({
             ref={scrollViewRef}
             contentContainerStyle={styles.scrollContentContainer}
           >
-            {conversation.map((message, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.messageContainer,
-                  message.role === "user"
-                    ? styles.userMessageContainer
-                    : styles.modelMessageContainer,
-                ]}
-              >
-                {message.role === "model" ? (
-                  <MarkdownDisplay
-                    style={{
-                      body: styles.responseText,
-                      heading1: {
-                        fontSize: 22,
-                        fontWeight: "bold",
-                        marginBottom: 10,
-                      },
-                      strong: { fontWeight: "bold" },
-                    }}
-                  >
-                    {message.content}
-                  </MarkdownDisplay>
-                ) : (
-                  <Text style={styles.userMessageText}>{message.content}</Text>
-                )}
-              </View>
-            ))}
+            {conversation.map((message, index) => {
+              const messageRef = React.createRef();
+              return (
+                <View
+                  key={index}
+                  ref={(el) => (messageRefs.current[index] = el)}
+                  style={[
+                    styles.messageContainer,
+                    message.role === "user"
+                      ? styles.userMessageContainer
+                      : styles.modelMessageContainer,
+                  ]}
+                  onLayout={(event) => {
+                    if (userMessageToScrollRef.current === index) {
+                      setTimeout(() => {
+                        const layout = event.nativeEvent.layout;
+                        scrollViewRef.current?.scrollTo({
+                          y: layout.y,
+                          animated: true,
+                        });
+                        userMessageToScrollRef.current = null;
+                      }, 100);
+                    }
+                  }}
+                >
+                  {message.role === "model" ? (
+                    <MarkdownDisplay
+                      style={{
+                        body: styles.responseText,
+                        heading1: {
+                          fontSize: 22,
+                          fontWeight: "bold",
+                          marginBottom: 10,
+                        },
+                        strong: { fontWeight: "bold" },
+                      }}
+                    >
+                      {message.content}
+                    </MarkdownDisplay>
+                  ) : (
+                    <Text style={styles.userMessageText}>
+                      {message.content}
+                    </Text>
+                  )}
+                </View>
+              );
+            })}
             {isStreaming &&
               conversation[conversation.length - 1]?.role === "model" && (
                 <ActivityIndicator
@@ -191,10 +213,11 @@ const ExpoundBottomSheet = ({
               placeholder="Ask a follow up question..."
               mode="flat"
               dense
-              multiline
+              // multiline
               underlineColor="transparent"
               activeUnderlineColor="transparent"
               backgroundColor="transparent"
+              onSubmitEditing={handleSendMessage}
             />
             <IconButton
               icon="send"
@@ -211,9 +234,9 @@ const ExpoundBottomSheet = ({
 const getStyles = (theme) =>
   StyleSheet.create({
     modalContainer: {
-      flex: 1,
       justifyContent: "flex-end",
-      backgroundColor: "rgba(0,0,0,0.5)",
+      height: "100%",
+      width: "100%",
     },
     container: {
       backgroundColor: theme.colors.surface,

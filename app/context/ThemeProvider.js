@@ -1,48 +1,48 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
-import { DarkTheme, LightTheme } from '../utils/themes';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useColorScheme } from "react-native";
+import { DarkTheme, LightTheme } from "../../utils/themes";
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeMode] = useState('system'); // 'light', 'dark', or 'system'
-  const [isDarkTheme, setIsDarkTheme] = useState(systemColorScheme === 'dark');
+  const [themeMode, setThemeMode] = useState("system"); // 'light', 'dark', or 'system'
+  const [isDarkTheme, setIsDarkTheme] = useState(systemColorScheme === "dark");
 
   useEffect(() => {
     const loadThemeMode = async () => {
       try {
-        const savedThemeMode = await AsyncStorage.getItem('themeMode');
+        const savedThemeMode = await AsyncStorage.getItem("themeMode");
         if (savedThemeMode) {
           setThemeMode(savedThemeMode);
         }
       } catch (error) {
-        console.error('Failed to load theme mode from storage', error);
+        console.error("Failed to load theme mode from storage", error);
       }
     };
     loadThemeMode();
   }, []);
 
   useEffect(() => {
-    if (themeMode === 'system') {
-      setIsDarkTheme(systemColorScheme === 'dark');
+    if (themeMode === "system") {
+      setIsDarkTheme(systemColorScheme === "dark");
     } else {
-      setIsDarkTheme(themeMode === 'dark');
+      setIsDarkTheme(themeMode === "dark");
     }
   }, [themeMode, systemColorScheme]);
 
   const setThemeModeAndUpdateStorage = async (mode) => {
     try {
-      await AsyncStorage.setItem('themeMode', mode);
+      await AsyncStorage.setItem("themeMode", mode);
       setThemeMode(mode);
     } catch (error) {
-      console.error('Failed to save theme mode to storage', error);
+      console.error("Failed to save theme mode to storage", error);
     }
   };
 
   const toggleTheme = () => {
-    const newThemeMode = isDarkTheme ? 'light' : 'dark';
+    const newThemeMode = isDarkTheme ? "light" : "dark";
     setThemeModeAndUpdateStorage(newThemeMode);
   };
 
@@ -65,4 +65,4 @@ export const ThemeProvider = ({ children }) => {
 
 export const useThemeContext = () => useContext(ThemeContext);
 
-export default ThemeProvider; 
+export default ThemeProvider;
