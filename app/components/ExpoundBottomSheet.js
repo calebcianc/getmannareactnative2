@@ -71,7 +71,7 @@ const ExpoundBottomSheet = ({
       const prompt = `Expound\n\n"${verseText}"\n\n${verseRef}`;
       const initialConversation = [{ role: "user", content: prompt }];
       setConversation(initialConversation);
-      handleStreamResponse(initialConversation);
+      handleResponse(initialConversation);
     } else {
       translateY.value = withTiming(height, { duration: 300 });
       setConversation([]);
@@ -79,20 +79,18 @@ const ExpoundBottomSheet = ({
     }
   }, [visible, height]);
 
-  const handleStreamResponse = async (currentConversation) => {
+  const handleResponse = async (currentConversation) => {
     setIsStreaming(true);
     setConversation((prev) => [...prev, { role: "model", content: "" }]);
     try {
-      const stream = await expoundVerse({ conversation: currentConversation });
-      for await (const chunk of stream) {
-        const chunkText = chunk.text();
-        setConversation((prev) => {
-          const newConversation = [...prev];
-          const lastMessage = newConversation[newConversation.length - 1];
-          lastMessage.content += chunkText;
-          return newConversation;
-        });
-      }
+      const result = await expoundVerse({ conversation: currentConversation });
+      const resultText = result.text;
+      setConversation((prev) => {
+        const newConversation = [...prev];
+        const lastMessage = newConversation[newConversation.length - 1];
+        lastMessage.content = resultText;
+        return newConversation;
+      });
     } catch (error) {
       setConversation((prev) => {
         const newConversation = [...prev];
@@ -117,7 +115,7 @@ const ExpoundBottomSheet = ({
     userMessageToScrollRef.current = newConversation.length - 1;
     setConversation(newConversation);
     setNewMessage("");
-    handleStreamResponse(newConversation);
+    handleResponse(newConversation);
   };
 
   return (
