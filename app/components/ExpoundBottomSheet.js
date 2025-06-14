@@ -235,7 +235,6 @@ const getStyles = (theme) =>
       flex: 1,
     },
     messageContainer: {
-      // marginBottom: 12,
       maxWidth: "95%",
     },
     userMessageContainer: {
@@ -255,9 +254,7 @@ const getStyles = (theme) =>
       flex: 1,
       marginBottom: 16,
     },
-    scrollContentContainer: {
-      // paddingBottom: 10,
-    },
+    scrollContentContainer: {},
     responseText: {
       fontSize: 16,
       lineHeight: 24,
@@ -271,7 +268,6 @@ const getStyles = (theme) =>
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: 28,
-      // marginTop: 8,
     },
     textInput: {
       flex: 1,
