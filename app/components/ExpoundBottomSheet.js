@@ -235,8 +235,8 @@ const getStyles = (theme) =>
       flex: 1,
     },
     messageContainer: {
-      marginBottom: 12,
-      maxWidth: "90%",
+      // marginBottom: 12,
+      maxWidth: "95%",
     },
     userMessageContainer: {
       backgroundColor: theme.colors.surfaceVariant,
@@ -256,7 +256,7 @@ const getStyles = (theme) =>
       marginBottom: 16,
     },
     scrollContentContainer: {
-      paddingBottom: 20,
+      // paddingBottom: 10,
     },
     responseText: {
       fontSize: 16,
@@ -265,17 +265,18 @@ const getStyles = (theme) =>
     },
     inputContainer: {
       flexDirection: "row",
-      alignItems: "flex-end",
+      alignItems: "center",
       borderWidth: 1,
       borderColor: theme.colors.outline,
       paddingHorizontal: 8,
-      paddingBottom: 4,
+      paddingVertical: 4,
       borderRadius: 28,
-      marginTop: 8,
+      // marginTop: 8,
     },
     textInput: {
       flex: 1,
       backgroundColor: "transparent",
+      paddingVertical: 0,
     },
   });
 
