@@ -1,7 +1,7 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { FlatList, Pressable, View, useWindowDimensions } from 'react-native';
+import { MaterialIcons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import { useCallback, useState } from "react";
+import { FlatList, Pressable, View, useWindowDimensions } from "react-native";
 import {
   Appbar,
   Button,
@@ -10,16 +10,17 @@ import {
   Menu,
   Portal,
   Text,
-  useTheme
-} from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BookName } from '../components/BookName';
-import { useBible } from '../context/BibleProvider';
-import { useThemeContext } from '../context/ThemeProvider';
+  useTheme,
+} from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BookName } from "../components/BookName";
+import { useBible } from "../context/BibleProvider";
+import { useThemeContext } from "../context/ThemeProvider";
 
-const MaterialIcon = (name) => ({ size, color }) => (
-  <MaterialIcons name={name} size={size} color={color} />
-);
+const MaterialIcon =
+  (name) =>
+  ({ size, color }) =>
+    <MaterialIcons name={name} size={size} color={color} />;
 
 function BibleHeader() {
   const {
@@ -45,17 +46,17 @@ function BibleHeader() {
   const [translationMenuVisible, setTranslationMenuVisible] = useState(false);
   const [tempSelectedBook, setTempSelectedBook] = useState(null);
 
-  const searchIcon = useCallback(MaterialIcon('search'), []);
+  const searchIcon = useCallback(MaterialIcon("search"), []);
   const themeIcon = useCallback(
-    MaterialIcon(isDarkTheme ? 'wb-sunny' : 'dark-mode'),
+    MaterialIcon(isDarkTheme ? "wb-sunny" : "dark-mode"),
     [isDarkTheme]
   );
-  const moreVertIcon = useCallback(MaterialIcon('more-vert'), []);
-  const textDecreaseIcon = useCallback(MaterialIcon('text-decrease'), []);
-  const textIncreaseIcon = useCallback(MaterialIcon('text-increase'), []);
-  const unfoldLessIcon = useCallback(MaterialIcon('unfold-less'), []);
-  const unfoldMoreIcon = useCallback(MaterialIcon('unfold-more'), []);
-  const backIcon = useCallback(MaterialIcon('arrow-back'), []);
+  const moreVertIcon = useCallback(MaterialIcon("more-vert"), []);
+  const textDecreaseIcon = useCallback(MaterialIcon("text-decrease"), []);
+  const textIncreaseIcon = useCallback(MaterialIcon("text-increase"), []);
+  const unfoldLessIcon = useCallback(MaterialIcon("unfold-less"), []);
+  const unfoldMoreIcon = useCallback(MaterialIcon("unfold-more"), []);
+  const backIcon = useCallback(MaterialIcon("arrow-back"), []);
 
   const openFontMenu = () => setFontMenuVisible(true);
   const closeFontMenu = () => setFontMenuVisible(false);
@@ -64,7 +65,7 @@ function BibleHeader() {
   const closeBookMenu = () => {
     setBookMenuVisible(false);
     setTempSelectedBook(null);
-  }
+  };
 
   const openTranslationMenu = () => setTranslationMenuVisible(true);
   const closeTranslationMenu = () => setTranslationMenuVisible(false);
@@ -89,8 +90,8 @@ function BibleHeader() {
     <Pressable
       style={{
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         padding: 12,
         margin: 5,
         borderRadius: 8,
@@ -101,7 +102,7 @@ function BibleHeader() {
       <Text
         style={{
           fontSize: 16,
-          fontWeight: '500',
+          fontWeight: "500",
           color: theme.colors.onSurfaceVariant,
         }}
       >
@@ -114,8 +115,8 @@ function BibleHeader() {
     <Pressable
       style={{
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         padding: 12,
         margin: 5,
         borderRadius: 8,
@@ -126,9 +127,9 @@ function BibleHeader() {
       <Text
         style={{
           fontSize: 16,
-          fontWeight: '500',
+          fontWeight: "500",
           color: theme.colors.onSurfaceVariant,
-          textAlign: 'center',
+          textAlign: "center",
         }}
       >
         {item.name}
@@ -140,8 +141,8 @@ function BibleHeader() {
     <Pressable
       style={{
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: "center",
+        justifyContent: "center",
         padding: 12,
         margin: 5,
         borderRadius: 8,
@@ -152,9 +153,9 @@ function BibleHeader() {
       <Text
         style={{
           fontSize: 16,
-          fontWeight: '500',
+          fontWeight: "500",
           color: theme.colors.onSurfaceVariant,
-          textAlign: 'center',
+          textAlign: "center",
         }}
       >
         {item.short_name}
@@ -174,7 +175,7 @@ function BibleHeader() {
   };
   const buttonLabelStyle = {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   };
 
   return (
@@ -185,8 +186,21 @@ function BibleHeader() {
         borderBottomColor: theme.colors.outlineVariant,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flex: 1,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 8,
+          }}
+        >
           <Menu
             visible={bookMenuVisible}
             onDismiss={closeBookMenu}
@@ -205,11 +219,11 @@ function BibleHeader() {
                     style={buttonLabelStyle}
                   />
                 ) : (
-                  'Select Book'
+                  "Select Book"
                 )}
               </Button>
             }
-            style={{ marginTop: 52, width: '90%' }}
+            style={{ marginTop: 52, width: "90%" }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
               borderRadius: 12,
@@ -228,9 +242,18 @@ function BibleHeader() {
               </View>
             ) : (
               <View style={{ maxHeight: height * 0.7 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <IconButton icon={backIcon} onPress={() => setTempSelectedBook(null)} />
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.colors.onSurface }}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <IconButton
+                    icon={backIcon}
+                    onPress={() => setTempSelectedBook(null)}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "bold",
+                      color: theme.colors.onSurface,
+                    }}
+                  >
                     {tempSelectedBook.name}
                   </Text>
                 </View>
@@ -283,16 +306,15 @@ function BibleHeader() {
           </Menu>
         </View>
 
-        <View style={{ flexDirection: 'row' }}>
+        <View style={{ flexDirection: "row" }}>
           <Appbar.Action icon={searchIcon} onPress={() => {}} />
-          <Appbar.Action
-            onPress={toggleTheme}
-            icon={themeIcon}
-          />
+          <Appbar.Action onPress={toggleTheme} icon={themeIcon} />
           <Menu
             visible={fontMenuVisible}
             onDismiss={closeFontMenu}
-            anchor={<Appbar.Action icon={moreVertIcon} onPress={openFontMenu} />}
+            anchor={
+              <Appbar.Action icon={moreVertIcon} onPress={openFontMenu} />
+            }
             style={{ marginTop: 40 }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
@@ -302,9 +324,9 @@ function BibleHeader() {
             <View style={{ paddingVertical: 8 }}>
               <View
                 style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-evenly',
-                  alignItems: 'center',
+                  flexDirection: "row",
+                  justifyContent: "space-evenly",
+                  alignItems: "center",
                 }}
               >
                 <IconButton
@@ -319,9 +341,9 @@ function BibleHeader() {
               <Divider style={{ marginVertical: 8 }} />
               <View
                 style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-evenly',
-                  alignItems: 'center',
+                  flexDirection: "row",
+                  justifyContent: "space-evenly",
+                  alignItems: "center",
                 }}
               >
                 <IconButton
@@ -349,12 +371,13 @@ export default function TabsLayout() {
     <Portal.Host>
       <Tabs
         screenOptions={{
-          header: (props) => (props.route.name === 'bible' ? <BibleHeader /> : null),
-          tabBarActiveTintColor: '#000',
-          tabBarInactiveTintColor: '#8e8e93',
+          header: (props) =>
+            props.route.name === "bible" ? <BibleHeader /> : null,
+          tabBarActiveTintColor: theme.colors.primary,
+          tabBarInactiveTintColor: theme.colors.tertiary,
           tabBarLabelStyle: {
             fontSize: 12,
-            fontWeight: '600',
+            fontWeight: "600",
           },
           tabBarStyle: {
             backgroundColor: theme.colors.surface,
@@ -368,10 +391,10 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
+            title: "Home",
             tabBarIcon: ({ color, size, focused }) => (
               <MaterialIcons
-                name={focused ? 'home' : 'home'}
+                name={focused ? "home" : "home"}
                 size={size}
                 color={color}
               />
@@ -381,10 +404,10 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="bible"
           options={{
-            title: 'Bible',
+            title: "Bible",
             tabBarIcon: ({ color, size, focused }) => (
               <MaterialIcons
-                name={focused ? 'book' : 'book'}
+                name={focused ? "book" : "book"}
                 size={size}
                 color={color}
               />
@@ -394,10 +417,10 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="settings"
           options={{
-            title: 'Settings',
+            title: "Settings",
             tabBarIcon: ({ color, size, focused }) => (
               <MaterialIcons
-                name={focused ? 'settings' : 'settings'}
+                name={focused ? "settings" : "settings"}
                 size={size}
                 color={color}
               />
@@ -407,4 +430,4 @@ export default function TabsLayout() {
       </Tabs>
     </Portal.Host>
   );
-} 
+}
