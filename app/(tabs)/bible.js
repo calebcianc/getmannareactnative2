@@ -1,42 +1,42 @@
-import { MaterialIcons } from '@expo/vector-icons';
-import { decode } from 'html-entities';
-import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { MaterialIcons } from "@expo/vector-icons";
+import { decode } from "html-entities";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  FAB,
-  Menu,
-  Paragraph,
-  Text,
-  useTheme
-} from 'react-native-paper';
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { FAB, Menu, Paragraph, Text, useTheme } from "react-native-paper";
 import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming
-} from 'react-native-reanimated';
-import ExpoundBottomSheet from '../components/ExpoundBottomSheet';
-import { useBible } from '../context/BibleProvider';
+  withTiming,
+} from "react-native-reanimated";
+import ExpoundBottomSheet from "../components/ExpoundBottomSheet";
+import { useBible } from "../context/BibleProvider";
 
 const toSuperscript = (str) => {
   const superscripts = {
-    '0': '⁰',
-    '1': '¹',
-    '2': '²',
-    '3': '³',
-    '4': '⁴',
-    '5': '⁵',
-    '6': '⁶',
-    '7': '⁷',
-    '8': '⁸',
-    '9': '⁹',
+    0: "⁰",
+    1: "¹",
+    2: "²",
+    3: "³",
+    4: "⁴",
+    5: "⁵",
+    6: "⁶",
+    7: "⁷",
+    8: "⁸",
+    9: "⁹",
   };
   return String(str)
-    .split('')
+    .split("")
     .map((char) => superscripts[char] || char)
-    .join('');
+    .join("");
 };
 
 const getStyles = (theme) =>
@@ -46,8 +46,8 @@ const getStyles = (theme) =>
     },
     loader: {
       flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
     },
     content: {
       paddingHorizontal: 20,
@@ -61,20 +61,20 @@ const getStyles = (theme) =>
       color: theme.colors.onBackground,
     },
     verseNumber: {
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: theme.colors.tertiary,
     },
     selectedVerse: {
       backgroundColor: theme.dark
-        ? 'rgba(255, 255, 255, 0.12)'
-        : 'rgba(0, 0, 0, 0.08)',
+        ? "rgba(255, 255, 255, 0.12)"
+        : "rgba(0, 0, 0, 0.08)",
       borderRadius: 6,
-      textDecorationLine: 'underline',
-      textDecorationStyle: 'dotted',
+      textDecorationLine: "underline",
+      textDecorationStyle: "dotted",
       textDecorationColor: theme.colors.onSurface,
     },
     fabLeft: {
-      position: 'absolute',
+      position: "absolute",
       margin: 15,
       left: 0,
       bottom: 0,
@@ -83,7 +83,7 @@ const getStyles = (theme) =>
       backgroundColor: theme.colors.surfaceVariant,
     },
     fabRight: {
-      position: 'absolute',
+      position: "absolute",
       margin: 15,
       right: 0,
       bottom: 0,
@@ -92,7 +92,7 @@ const getStyles = (theme) =>
       backgroundColor: theme.colors.surfaceVariant,
     },
     selectionOptionsBar: {
-      position: 'absolute',
+      position: "absolute",
       bottom: 15,
       left: 15,
       right: 15,
@@ -109,8 +109,8 @@ const getStyles = (theme) =>
       height: 4,
       borderRadius: 2,
       backgroundColor: theme.colors.onSurfaceVariant,
-      alignSelf: 'center',
-      position: 'absolute',
+      alignSelf: "center",
+      position: "absolute",
       top: 10,
     },
     actionsScrollView: {
@@ -118,8 +118,8 @@ const getStyles = (theme) =>
       marginTop: 12,
     },
     actionButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       backgroundColor: theme.colors.surface,
       borderRadius: 16,
       paddingHorizontal: 16,
@@ -128,16 +128,16 @@ const getStyles = (theme) =>
     },
     actionButtonText: {
       marginLeft: 8,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: theme.colors.onSurface,
     },
     expoundButtonContainer: {
       marginHorizontal: 12,
     },
     expoundButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: theme.colors.surface,
       borderRadius: 16,
       paddingHorizontal: 16,
@@ -146,7 +146,7 @@ const getStyles = (theme) =>
     expoundButtonText: {
       marginLeft: 8,
       fontSize: 16,
-      fontWeight: 'bold',
+      fontWeight: "bold",
       color: theme.colors.onSurface,
       flexShrink: 1,
     },
@@ -155,8 +155,8 @@ const getStyles = (theme) =>
     },
     chapterItemContainer: {
       flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       padding: 12,
       margin: 5,
       borderRadius: 8,
@@ -164,15 +164,15 @@ const getStyles = (theme) =>
     },
     chapterItem: {
       fontSize: 16,
-      fontWeight: '500',
+      fontWeight: "500",
       color: theme.colors.onSurfaceVariant,
     },
     headerButtonText: {
       fontSize: 18,
-      fontWeight: '600',
+      fontWeight: "600",
     },
     headerRight: {
-      flexDirection: 'row',
+      flexDirection: "row",
     },
   });
 
@@ -243,7 +243,10 @@ const BibleScreen = () => {
     if (!loading && scrollViewRef.current) {
       setTimeout(() => {
         if (scrollViewRef.current) {
-          scrollViewRef.current.scrollTo({ y: scrollPosition, animated: false });
+          scrollViewRef.current.scrollTo({
+            y: scrollPosition,
+            animated: false,
+          });
         }
       }, 100);
     }
@@ -295,7 +298,7 @@ const BibleScreen = () => {
   const closeHighlightMenu = () => setHighlightMenuVisible(false);
 
   const getVerseRange = (verses) => {
-    if (!verses || verses.length === 0) return '';
+    if (!verses || verses.length === 0) return "";
     const verseNumbers = verses.map((v) => v.verse);
 
     if (verseNumbers.length === 1) {
@@ -326,16 +329,18 @@ const BibleScreen = () => {
       ranges.push(`${start}-${end}`);
     }
 
-    return ranges.join(', ');
+    return ranges.join(", ");
   };
 
-  const verseRef = `${selectedBook?.name} ${selectedChapter}:${getVerseRange(selectedVerses)}`;
+  const verseRef = `${selectedBook?.name} ${selectedChapter}:${getVerseRange(
+    selectedVerses
+  )}`;
   const expoundText = `Expound on ${verseRef}`;
 
   const firstRowActions = [
     {
-      label: 'Highlight',
-      icon: 'highlight',
+      label: "Highlight",
+      icon: "highlight",
       onPress: openHighlightMenu,
       menu: (
         <Menu
@@ -343,25 +348,70 @@ const BibleScreen = () => {
           onDismiss={closeHighlightMenu}
           anchor={
             <Pressable style={styles.actionButton} onPress={openHighlightMenu}>
-              <MaterialIcons name="highlight" size={20} color={theme.colors.onSurface} />
+              <MaterialIcons
+                name="highlight"
+                size={20}
+                color={theme.colors.onSurface}
+              />
               <Text style={styles.actionButtonText}>Highlight</Text>
             </Pressable>
           }
         >
-          <Menu.Item onPress={() => {}} title="Yellow" leadingIcon={() => <View style={{width: 16, height: 16, borderRadius: 8, backgroundColor: 'yellow'}} />} />
-          <Menu.Item onPress={() => {}} title="Blue" leadingIcon={() => <View style={{width: 16, height: 16, borderRadius: 8, backgroundColor: 'lightblue'}} />} />
-          <Menu.Item onPress={() => {}} title="Green" leadingIcon={() => <View style={{width: 16, height: 16, borderRadius: 8, backgroundColor: 'lightgreen'}} />} />
+          <Menu.Item
+            onPress={() => {}}
+            title="Yellow"
+            leadingIcon={() => (
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: "yellow",
+                }}
+              />
+            )}
+          />
+          <Menu.Item
+            onPress={() => {}}
+            title="Blue"
+            leadingIcon={() => (
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: "lightblue",
+                }}
+              />
+            )}
+          />
+          <Menu.Item
+            onPress={() => {}}
+            title="Green"
+            leadingIcon={() => (
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: "lightgreen",
+                }}
+              />
+            )}
+          />
         </Menu>
       ),
     },
-    { label: 'Notes', icon: 'edit-note', onPress: () => {} },
-    { label: 'Copy', icon: 'content-copy', onPress: () => {} },
-    { label: 'Share', icon: 'share', onPress: () => {} },
-    { label: 'Bookmark', icon: 'bookmark-border', onPress: () => {} },
+    { label: "Notes", icon: "edit-note", onPress: () => {} },
+    { label: "Copy", icon: "content-copy", onPress: () => {} },
+    { label: "Share", icon: "share", onPress: () => {} },
+    { label: "Bookmark", icon: "bookmark-border", onPress: () => {} },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       {loading ? (
         <ActivityIndicator size="large" style={styles.loader} />
       ) : (
@@ -373,10 +423,7 @@ const BibleScreen = () => {
             scrollEventThrottle={16}
           >
             <Paragraph
-              style={[
-                styles.paragraph,
-                { fontSize, lineHeight, fontFamily },
-              ]}
+              style={[styles.paragraph, { fontSize, lineHeight, fontFamily }]}
             >
               {verses.map((verse, index) => {
                 const isSelected = selectedVerses.some(
@@ -389,11 +436,11 @@ const BibleScreen = () => {
                     style={isSelected ? styles.selectedVerse : {}}
                     onPress={() => handleVersePress(verse)}
                   >
-                    {index > 0 && ' '}
+                    {index > 0 && " "}
                     <Text style={styles.verseNumber}>
-                      {toSuperscript(verse.verse)}{' '}
+                      {toSuperscript(verse.verse)}{" "}
                     </Text>
-                    {decode(verse.text.replace(/<[^>]+>/g, ''))}
+                    {decode(verse.text.replace(/<[^>]+>/g, ""))}
                   </Text>
                 );
               })}
@@ -408,18 +455,40 @@ const BibleScreen = () => {
 
             <View style={styles.expoundButtonContainer}>
               <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
-                <MaterialIcons name="manage-search" size={24} color={theme.colors.onSurface} />
-                <Text style={styles.expoundButtonText} numberOfLines={1} ellipsizeMode="tail">{expoundText}</Text>
+                <MaterialIcons
+                  name="manage-search"
+                  size={24}
+                  color={theme.colors.onSurface}
+                />
+                <Text
+                  style={styles.expoundButtonText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {expoundText}
+                </Text>
               </Pressable>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsScrollView}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.actionsScrollView}
+            >
               {firstRowActions.map((action) =>
                 action.menu ? (
                   React.cloneElement(action.menu, { key: action.label })
                 ) : (
-                  <Pressable key={action.label} style={styles.actionButton} onPress={action.onPress}>
-                    <MaterialIcons name={action.icon} size={20} color={theme.colors.onSurface} />
+                  <Pressable
+                    key={action.label}
+                    style={styles.actionButton}
+                    onPress={action.onPress}
+                  >
+                    <MaterialIcons
+                      name={action.icon}
+                      size={20}
+                      color={theme.colors.onSurface}
+                    />
                     <Text style={styles.actionButtonText}>{action.label}</Text>
                   </Pressable>
                 )
@@ -456,6 +525,6 @@ const BibleScreen = () => {
       />
     </View>
   );
-}
+};
 
-export default BibleScreen; 
+export default BibleScreen;

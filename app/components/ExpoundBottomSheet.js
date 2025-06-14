@@ -1,3 +1,4 @@
+import { decode } from "html-entities";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ScrollView,
@@ -5,12 +6,14 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import MarkdownDisplay from "react-native-markdown-display";
 import {
   ActivityIndicator,
   IconButton,
   Modal,
   Portal,
   Text,
+  TextInput,
   useTheme,
 } from "react-native-paper";
 import Animated, {
@@ -31,7 +34,8 @@ const ExpoundBottomSheet = ({
   const theme = useTheme();
   const styles = getStyles(theme);
   const { height } = useWindowDimensions();
-  const [conversationText, setConversationText] = useState("");
+  const [conversation, setConversation] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollViewRef = useRef(null);
   const translateY = useSharedValue(height);
@@ -58,37 +62,54 @@ const ExpoundBottomSheet = ({
   useEffect(() => {
     if (visible) {
       translateY.value = withSpring(0, { damping: 15 });
-      handleStreamResponse();
+      const verseText = selectedVerses
+        .map((v) => decode(v.text.replace(/<[^>]+>/g, "")))
+        .join(" ");
+      const prompt = `Expound\n\n"${verseText}"\n\n${verseRef}`;
+      const initialConversation = [{ role: "user", content: prompt }];
+      setConversation(initialConversation);
+      handleStreamResponse(prompt);
     } else {
       translateY.value = withTiming(height, { duration: 300 });
-      setConversationText("");
+      setConversation([]);
+      setNewMessage("");
     }
   }, [visible, height]);
 
-  const handleStreamResponse = async () => {
+  const handleStreamResponse = async (prompt) => {
     setIsStreaming(true);
-    let currentResponse = "";
+    setConversation((prev) => [...prev, { role: "model", content: "" }]);
     try {
-      const stream = await expoundVerse({
-        book: book.name,
-        chapter,
-        verse: getVerseRange(),
-      });
+      const stream = await expoundVerse({ prompt });
       for await (const chunk of stream) {
         const chunkText = chunk.text();
-        currentResponse += chunkText;
-        setConversationText((prev) => prev + chunkText);
+        setConversation((prev) => {
+          const newConversation = [...prev];
+          const lastMessage = newConversation[newConversation.length - 1];
+          lastMessage.content += chunkText;
+          return newConversation;
+        });
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }
     } catch (error) {
-      setConversationText(
-        (prev) =>
-          prev +
-          "Failed to get response. Please check your API key and network connection."
-      );
+      setConversation((prev) => {
+        const newConversation = [...prev];
+        const lastMessage = newConversation[newConversation.length - 1];
+        lastMessage.content +=
+          "Failed to get response. Please check your API key and network connection.";
+        return newConversation;
+      });
     } finally {
       setIsStreaming(false);
     }
+  };
+
+  const handleSendMessage = () => {
+    if (newMessage.trim() === "") return;
+    const prompt = newMessage.trim();
+    setConversation((prev) => [...prev, { role: "user", content: prompt }]);
+    setNewMessage("");
+    handleStreamResponse(prompt);
   };
 
   return (
@@ -121,14 +142,62 @@ const ExpoundBottomSheet = ({
             ref={scrollViewRef}
             contentContainerStyle={styles.scrollContentContainer}
           >
-            <Text style={styles.responseText}>{conversationText}</Text>
-            {isStreaming && (
-              <ActivityIndicator
-                animating={true}
-                style={{ marginVertical: 10 }}
-              />
-            )}
+            {conversation.map((message, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.messageContainer,
+                  message.role === "user"
+                    ? styles.userMessageContainer
+                    : styles.modelMessageContainer,
+                ]}
+              >
+                {message.role === "model" ? (
+                  <MarkdownDisplay
+                    style={{
+                      body: styles.responseText,
+                      heading1: {
+                        fontSize: 22,
+                        fontWeight: "bold",
+                        marginBottom: 10,
+                      },
+                      strong: { fontWeight: "bold" },
+                    }}
+                  >
+                    {message.content}
+                  </MarkdownDisplay>
+                ) : (
+                  <Text style={styles.userMessageText}>{message.content}</Text>
+                )}
+              </View>
+            ))}
+            {isStreaming &&
+              conversation[conversation.length - 1]?.role === "model" && (
+                <ActivityIndicator
+                  animating={true}
+                  style={{ marginVertical: 10 }}
+                />
+              )}
           </ScrollView>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              value={newMessage}
+              onChangeText={setNewMessage}
+              placeholder="Ask a follow up question..."
+              mode="flat"
+              dense
+              multiline
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              backgroundColor="transparent"
+            />
+            <IconButton
+              icon="send"
+              onPress={handleSendMessage}
+              disabled={isStreaming || newMessage.trim() === ""}
+            />
+          </View>
         </Animated.View>
       </Modal>
     </Portal>
@@ -165,6 +234,23 @@ const getStyles = (theme) =>
       textAlign: "center",
       flex: 1,
     },
+    messageContainer: {
+      marginBottom: 12,
+      maxWidth: "90%",
+    },
+    userMessageContainer: {
+      backgroundColor: theme.colors.surfaceVariant,
+      alignSelf: "flex-end",
+      padding: 12,
+      borderRadius: 12,
+    },
+    modelMessageContainer: {
+      alignSelf: "flex-start",
+    },
+    userMessageText: {
+      fontSize: 16,
+      color: theme.colors.onSurfaceVariant,
+    },
     responseContainer: {
       flex: 1,
       marginBottom: 16,
@@ -176,6 +262,20 @@ const getStyles = (theme) =>
       fontSize: 16,
       lineHeight: 24,
       color: theme.colors.onSurface,
+    },
+    inputContainer: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      paddingHorizontal: 8,
+      paddingBottom: 4,
+      borderRadius: 28,
+      marginTop: 8,
+    },
+    textInput: {
+      flex: 1,
+      backgroundColor: "transparent",
     },
   });
 
