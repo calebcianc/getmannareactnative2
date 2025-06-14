@@ -68,7 +68,7 @@ const ExpoundBottomSheet = ({
       const prompt = `Expound\n\n"${verseText}"\n\n${verseRef}`;
       const initialConversation = [{ role: "user", content: prompt }];
       setConversation(initialConversation);
-      handleStreamResponse(prompt);
+      handleStreamResponse(initialConversation);
     } else {
       translateY.value = withTiming(height, { duration: 300 });
       setConversation([]);
@@ -76,11 +76,11 @@ const ExpoundBottomSheet = ({
     }
   }, [visible, height]);
 
-  const handleStreamResponse = async (prompt) => {
+  const handleStreamResponse = async (currentConversation) => {
     setIsStreaming(true);
     setConversation((prev) => [...prev, { role: "model", content: "" }]);
     try {
-      const stream = await expoundVerse({ prompt });
+      const stream = await expoundVerse({ conversation: currentConversation });
       for await (const chunk of stream) {
         const chunkText = chunk.text();
         setConversation((prev) => {
@@ -107,9 +107,13 @@ const ExpoundBottomSheet = ({
   const handleSendMessage = () => {
     if (newMessage.trim() === "") return;
     const prompt = newMessage.trim();
-    setConversation((prev) => [...prev, { role: "user", content: prompt }]);
+    const newConversation = [
+      ...conversation,
+      { role: "user", content: prompt },
+    ];
+    setConversation(newConversation);
     setNewMessage("");
-    handleStreamResponse(prompt);
+    handleStreamResponse(newConversation);
   };
 
   return (
