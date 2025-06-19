@@ -1,11 +1,13 @@
 import { decode } from "html-entities";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import MarkdownDisplay from "react-native-markdown-display";
 import {
   IconButton,
@@ -16,6 +18,8 @@ import {
   useTheme,
 } from "react-native-paper";
 import Animated, {
+  interpolate,
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -42,10 +46,34 @@ const ExpoundBottomSheet = ({
   const messageRefs = useRef([]);
   const headerRef = useRef(null);
   const translateY = useSharedValue(height);
+  const animatedProgress = useSharedValue(0);
+  const startY = useSharedValue(0);
+
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      startY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      translateY.value = Math.max(0, startY.value + event.translationY);
+    })
+    .onEnd(() => {
+      if (translateY.value > height * 0.3) {
+        runOnJS(onDismiss)();
+      } else {
+        translateY.value = withSpring(0, { damping: 15 });
+      }
+    });
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: translateY.value }],
+    };
+  });
+
+  const backdropAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(animatedProgress.value, [0, 1], [0, 0.5]),
+      display: animatedProgress.value === 0 ? "none" : "flex",
     };
   });
 
@@ -65,6 +93,7 @@ const ExpoundBottomSheet = ({
   useEffect(() => {
     if (visible) {
       translateY.value = withSpring(0, { damping: 15 });
+      animatedProgress.value = withTiming(1);
       const verseText = selectedVerses
         .map((v) => decode(v.text.replace(/<[^>]+>/g, "")))
         .join(" ");
@@ -74,6 +103,7 @@ const ExpoundBottomSheet = ({
       handleResponse(initialConversation);
     } else {
       translateY.value = withTiming(height, { duration: 300 });
+      animatedProgress.value = withTiming(0);
       setConversation([]);
       setNewMessage("");
     }
@@ -125,104 +155,116 @@ const ExpoundBottomSheet = ({
         onDismiss={onDismiss}
         contentContainerStyle={styles.modalContainer}
       >
-        <Animated.View style={[styles.container, animatedStyle]}>
-          <View style={styles.header} ref={headerRef}>
-            <IconButton
-              icon="history"
-              size={24}
-              onPress={() => {
-                /* Handle past chats view */
-              }}
-              style={styles.headerIcon}
-            />
-            <Text style={styles.title}>{title}</Text>
-            <IconButton
-              icon="close"
-              size={24}
-              onPress={onDismiss}
-              style={styles.headerIcon}
-            />
-          </View>
-          <ScrollView
-            style={styles.responseContainer}
-            ref={scrollViewRef}
-            contentContainerStyle={styles.scrollContentContainer}
-          >
-            {conversation.map((message, index) => {
-              const messageRef = React.createRef();
-              return (
-                <View
-                  key={index}
-                  ref={(el) => (messageRefs.current[index] = el)}
-                  style={[
-                    styles.messageContainer,
-                    message.role === "user"
-                      ? styles.userMessageContainer
-                      : styles.modelMessageContainer,
-                  ]}
-                  onLayout={(event) => {
-                    if (userMessageToScrollRef.current === index) {
-                      setTimeout(() => {
-                        const layout = event.nativeEvent.layout;
-                        scrollViewRef.current?.scrollTo({
-                          y: layout.y,
-                          animated: true,
-                        });
-                        userMessageToScrollRef.current = null;
-                      }, 100);
-                    }
-                  }}
-                >
-                  {message.role === "model" ? (
-                    <MarkdownDisplay
-                      style={{
-                        body: styles.responseText,
-                        heading1: {
-                          fontSize: 22,
-                          fontWeight: "bold",
-                          marginBottom: 10,
-                        },
-                        strong: { fontWeight: "bold" },
-                      }}
-                    >
-                      {message.content}
-                    </MarkdownDisplay>
-                  ) : (
-                    <Text style={styles.userMessageText}>
-                      {message.content}
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
-            {isStreaming &&
-              conversation[conversation.length - 1]?.role === "model" && (
-                <View style={{ marginVertical: 10 }}>
-                  <SkeletonLoader count={5} />
-                </View>
-              )}
-          </ScrollView>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              value={newMessage}
-              onChangeText={setNewMessage}
-              placeholder="Ask a follow up question..."
-              mode="flat"
-              dense
-              // multiline
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              backgroundColor="transparent"
-              onSubmitEditing={handleSendMessage}
-            />
-            <IconButton
-              icon="send"
-              onPress={handleSendMessage}
-              disabled={isStreaming || newMessage.trim() === ""}
-            />
-          </View>
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: "black" },
+            backdropAnimatedStyle,
+          ]}
+        >
+          <Pressable onPress={onDismiss} style={StyleSheet.absoluteFill} />
         </Animated.View>
+        <GestureDetector gesture={panGesture}>
+          <Animated.View style={[styles.container, animatedStyle]}>
+            <View style={styles.handle} />
+            <View style={styles.header} ref={headerRef}>
+              <IconButton
+                icon="history"
+                size={24}
+                onPress={() => {
+                  /* Handle past chats view */
+                }}
+                style={styles.headerIcon}
+              />
+              <Text style={styles.title}>{title}</Text>
+              <IconButton
+                icon="close"
+                size={24}
+                onPress={onDismiss}
+                style={styles.headerIcon}
+              />
+            </View>
+            <ScrollView
+              style={styles.responseContainer}
+              ref={scrollViewRef}
+              contentContainerStyle={styles.scrollContentContainer}
+            >
+              {conversation.map((message, index) => {
+                const messageRef = React.createRef();
+                return (
+                  <View
+                    key={index}
+                    ref={(el) => (messageRefs.current[index] = el)}
+                    style={[
+                      styles.messageContainer,
+                      message.role === "user"
+                        ? styles.userMessageContainer
+                        : styles.modelMessageContainer,
+                    ]}
+                    onLayout={(event) => {
+                      if (userMessageToScrollRef.current === index) {
+                        setTimeout(() => {
+                          const layout = event.nativeEvent.layout;
+                          scrollViewRef.current?.scrollTo({
+                            y: layout.y,
+                            animated: true,
+                          });
+                          userMessageToScrollRef.current = null;
+                        }, 100);
+                      }
+                    }}
+                  >
+                    {message.role === "model" ? (
+                      <MarkdownDisplay
+                        style={{
+                          body: styles.responseText,
+                          heading1: {
+                            fontSize: 22,
+                            fontWeight: "bold",
+                            marginBottom: 10,
+                          },
+                          strong: { fontWeight: "bold" },
+                        }}
+                      >
+                        {message.content}
+                      </MarkdownDisplay>
+                    ) : (
+                      <Text style={styles.userMessageText}>
+                        {message.content}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+              {isStreaming &&
+                conversation[conversation.length - 1]?.role === "model" && (
+                  <View style={{ marginVertical: 10 }}>
+                    <SkeletonLoader count={5} />
+                  </View>
+                )}
+            </ScrollView>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.textInput}
+                value={newMessage}
+                onChangeText={setNewMessage}
+                placeholder="Ask a follow up question..."
+                mode="flat"
+                dense
+                // multiline
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                backgroundColor="transparent"
+                onSubmitEditing={handleSendMessage}
+              />
+              <IconButton
+                icon="send"
+                onPress={handleSendMessage}
+                disabled={isStreaming || newMessage.trim() === ""}
+              />
+            </View>
+          </Animated.View>
+        </GestureDetector>
       </Modal>
     </Portal>
   );
@@ -241,6 +283,16 @@ const getStyles = (theme) =>
       borderTopLeftRadius: 20,
       borderTopRightRadius: 20,
       height: "90%",
+      paddingTop: 24,
+    },
+    handle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.colors.onSurfaceVariant,
+      alignSelf: "center",
+      position: "absolute",
+      top: 10,
     },
     header: {
       flexDirection: "row",
