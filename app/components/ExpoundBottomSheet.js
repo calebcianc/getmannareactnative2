@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import MarkdownDisplay from "react-native-markdown-display";
 import {
-  ActivityIndicator,
   IconButton,
   Modal,
   Portal,
@@ -23,6 +22,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { expoundVerse } from "../../utils/gemini";
+import SkeletonLoader from "./SkeletonLoader";
 
 const ExpoundBottomSheet = ({
   visible,
@@ -197,10 +197,9 @@ const ExpoundBottomSheet = ({
             })}
             {isStreaming &&
               conversation[conversation.length - 1]?.role === "model" && (
-                <ActivityIndicator
-                  animating={true}
-                  style={{ marginVertical: 10 }}
-                />
+                <View style={{ marginVertical: 10 }}>
+                  <SkeletonLoader count={5} />
+                </View>
               )}
           </ScrollView>
           <View style={styles.inputContainer}>
