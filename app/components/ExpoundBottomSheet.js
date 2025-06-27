@@ -6,10 +6,15 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import {
+  Gesture,
+  GestureDetector,
+  Swipeable,
+} from "react-native-gesture-handler";
 import MarkdownDisplay from "react-native-markdown-display";
 import {
   IconButton,
@@ -36,6 +41,7 @@ const ExpoundBottomSheet = ({
   selectedVerses,
   book,
   chapter,
+  openInHistoryView,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -124,18 +130,6 @@ const ExpoundBottomSheet = ({
     if (visible) {
       translateY.value = withSpring(0, { damping: 15 });
       animatedProgress.value = withTiming(1);
-
-      if (isNewChat) {
-        const verseRef = `${book?.name} ${chapter}:${getVerseRange()}`;
-        setActiveVerseRef(verseRef);
-        const verseText = selectedVerses
-          .map((v) => decode(v.text.replace(/<[^>]+>/g, "")))
-          .join(" ");
-        const prompt = `Expound\n\n"${verseText}"\n\n${verseRef}`;
-        const initialConversation = [{ role: "user", content: prompt }];
-        setConversation(initialConversation);
-        handleResponse(initialConversation, true);
-      }
     } else {
       translateY.value = withTiming(height, { duration: 300 });
       animatedProgress.value = withTiming(0);
@@ -147,7 +141,25 @@ const ExpoundBottomSheet = ({
       setCurrentChatId(null);
       setActiveVerseRef("");
     }
-  }, [visible, isNewChat]);
+  }, [visible]);
+
+  useEffect(() => {
+    if (openInHistoryView) {
+      setViewMode("history");
+      return;
+    }
+    if (visible && isNewChat) {
+      const verseRef = `${book?.name} ${chapter}:${getVerseRange()}`;
+      setActiveVerseRef(verseRef);
+      const verseText = selectedVerses
+        .map((v) => decode(v.text.replace(/<[^>]+>/g, "")))
+        .join(" ");
+      const prompt = `Expound\n\n"${verseText}"\n\n${verseRef}`;
+      const initialConversation = [{ role: "user", content: prompt }];
+      setConversation(initialConversation);
+      handleResponse(initialConversation, true, verseRef);
+    }
+  }, [visible, isNewChat, openInHistoryView]);
 
   const saveChat = useCallback(
     async (chatToSave, ref) => {
@@ -193,7 +205,11 @@ const ExpoundBottomSheet = ({
     [chatHistory, currentChatId]
   );
 
-  const handleResponse = async (currentConversation, isFirst = false) => {
+  const handleResponse = async (
+    currentConversation,
+    isFirst = false,
+    verseRef = ""
+  ) => {
     setIsStreaming(true);
     setConversation((prev) => [...prev, { role: "model", content: "" }]);
     try {
@@ -206,7 +222,7 @@ const ExpoundBottomSheet = ({
       setConversation(finalConversation);
 
       if (isFirst && isNewChat) {
-        runOnJS(saveChat)(finalConversation, activeVerseRef);
+        runOnJS(saveChat)(finalConversation, verseRef || activeVerseRef);
       } else if (!isNewChat) {
         runOnJS(updateChat)(finalConversation);
       }
@@ -237,6 +253,16 @@ const ExpoundBottomSheet = ({
     handleResponse(newConversation);
   };
 
+  const handleDeleteChat = async (chatId) => {
+    try {
+      const updatedHistory = chatHistory.filter((chat) => chat.id !== chatId);
+      setChatHistory(updatedHistory);
+      await AsyncStorage.setItem("chatHistory", JSON.stringify(updatedHistory));
+    } catch (e) {
+      console.error("Failed to delete chat.", e);
+    }
+  };
+
   const handleSelectChat = (chat) => {
     setConversation(chat.conversation);
     setActiveVerseRef(chat.verseRef);
@@ -249,20 +275,52 @@ const ExpoundBottomSheet = ({
     onDismiss();
   };
 
-  const renderHistoryItem = ({ item }) => (
-    <Pressable
-      onPress={() => handleSelectChat(item)}
-      style={styles.historyItem}
-    >
-      <Text style={styles.historyItemTitle}>{item.verseRef}</Text>
-      <Text style={styles.historyItemSnippet} numberOfLines={2}>
-        {item.conversation[1]?.content || "..."}
-      </Text>
-      <Text style={styles.historyItemDate}>
-        {new Date(item.timestamp).toLocaleDateString()}
-      </Text>
-    </Pressable>
-  );
+  const renderHistoryItem = ({ item }) => {
+    const renderRightActions = (progress, dragX) => {
+      const trans = dragX.interpolate({
+        inputRange: [-80, 0],
+        outputRange: [0, 80],
+        extrapolate: "clamp",
+      });
+      return (
+        <TouchableOpacity
+          onPress={() => handleDeleteChat(item.id)}
+          style={styles.deleteButton}
+        >
+          <Animated.Text
+            style={[
+              styles.deleteButtonText,
+              {
+                transform: [{ translateX: trans }],
+              },
+            ]}
+          >
+            Delete
+          </Animated.Text>
+        </TouchableOpacity>
+      );
+    };
+
+    const date = new Date(item.timestamp);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    const formattedDate = `${day}/${month}/${year}`;
+
+    return (
+      <Swipeable renderRightActions={renderRightActions}>
+        <Pressable
+          onPress={() => handleSelectChat(item)}
+          style={styles.historyItem}
+        >
+          <View style={styles.historyItemContent}>
+            <Text style={styles.historyItemTitle}>{item.verseRef}</Text>
+            <Text style={styles.historyItemDate}>{formattedDate}</Text>
+          </View>
+        </Pressable>
+      </Swipeable>
+    );
+  };
 
   return (
     <Portal>
@@ -491,22 +549,33 @@ const getStyles = (theme) =>
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.outline,
+      backgroundColor: theme.colors.surface,
+    },
+    historyItemContent: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
     },
     historyItemTitle: {
       fontSize: 16,
       fontWeight: "bold",
       color: theme.colors.onSurface,
-      marginBottom: 4,
-    },
-    historyItemSnippet: {
-      fontSize: 14,
-      color: theme.colors.onSurfaceVariant,
-      marginBottom: 4,
+      flexShrink: 1,
     },
     historyItemDate: {
       fontSize: 12,
       color: theme.colors.onSurfaceVariant,
-      textAlign: "right",
+    },
+    deleteButton: {
+      backgroundColor: "red",
+      justifyContent: "center",
+      alignItems: "flex-end",
+      paddingRight: 20,
+      width: 80,
+    },
+    deleteButtonText: {
+      color: "white",
+      fontWeight: "bold",
     },
   });
 

@@ -193,6 +193,8 @@ const BibleScreen = () => {
     lineHeight,
     fontFamily,
     selectedTranslation,
+    showHistory,
+    setShowHistory,
   } = useBible();
 
   const [selectedVerses, setSelectedVerses] = useState([]);
@@ -291,7 +293,7 @@ const BibleScreen = () => {
   const showBottomSheet = () => setBottomSheetVisible(true);
   const hideBottomSheet = () => {
     setBottomSheetVisible(false);
-    setSelectedVerses([]);
+    setShowHistory(false);
   };
 
   const openHighlightMenu = () => setHighlightMenuVisible(true);
@@ -517,11 +519,12 @@ const BibleScreen = () => {
         </>
       )}
       <ExpoundBottomSheet
-        visible={isBottomSheetVisible}
+        visible={isBottomSheetVisible || showHistory}
         onDismiss={hideBottomSheet}
         selectedVerses={selectedVerses}
         book={selectedBook}
         chapter={selectedChapter}
+        openInHistoryView={showHistory}
       />
     </View>
   );

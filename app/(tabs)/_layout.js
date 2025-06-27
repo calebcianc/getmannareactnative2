@@ -37,6 +37,7 @@ function BibleHeader() {
     books,
     translations,
     setScrollPosition,
+    openHistoryView,
   } = useBible();
   const { height } = useWindowDimensions();
   const { toggleTheme, isDarkTheme } = useThemeContext();
@@ -308,55 +309,42 @@ function BibleHeader() {
 
         <View style={{ flexDirection: "row" }}>
           <Appbar.Action icon={searchIcon} onPress={() => {}} />
-          <Appbar.Action onPress={toggleTheme} icon={themeIcon} />
           <Menu
             visible={fontMenuVisible}
             onDismiss={closeFontMenu}
-            anchor={
-              <Appbar.Action icon={moreVertIcon} onPress={openFontMenu} />
-            }
-            style={{ marginTop: 40 }}
+            anchor={<IconButton icon={moreVertIcon} onPress={openFontMenu} />}
             contentStyle={{
               backgroundColor: theme.colors.surface,
               borderRadius: 12,
             }}
           >
-            <View style={{ paddingVertical: 8 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-evenly",
-                  alignItems: "center",
-                }}
-              >
-                <IconButton
-                  icon={textDecreaseIcon}
-                  onPress={decreaseFontSize}
-                />
-                <IconButton
-                  icon={textIncreaseIcon}
-                  onPress={increaseFontSize}
-                />
-              </View>
-              <Divider style={{ marginVertical: 8 }} />
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-evenly",
-                  alignItems: "center",
-                }}
-              >
-                <IconButton
-                  icon={unfoldLessIcon}
-                  onPress={decreaseLineHeight}
-                />
-                <IconButton
-                  icon={unfoldMoreIcon}
-                  onPress={increaseLineHeight}
-                />
-              </View>
-            </View>
+            <Menu.Item
+              onPress={toggleTheme}
+              title={isDarkTheme ? "Light mode" : "Dark mode"}
+              leadingIcon={themeIcon}
+            />
+            <Menu.Item
+              onPress={decreaseFontSize}
+              title="Decrease font size"
+              leadingIcon={textDecreaseIcon}
+            />
+            <Menu.Item
+              onPress={increaseFontSize}
+              title="Increase font size"
+              leadingIcon={textIncreaseIcon}
+            />
+            <Menu.Item
+              onPress={decreaseLineHeight}
+              title="Decrease line height"
+              leadingIcon={unfoldLessIcon}
+            />
+            <Menu.Item
+              onPress={increaseLineHeight}
+              title="Increase line height"
+              leadingIcon={unfoldMoreIcon}
+            />
           </Menu>
+          <IconButton icon="history" onPress={openHistoryView} />
         </View>
       </View>
     </Appbar.Header>
