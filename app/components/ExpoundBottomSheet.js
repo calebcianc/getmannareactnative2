@@ -1,6 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "html-entities";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  FlatList,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -41,6 +43,11 @@ const ExpoundBottomSheet = ({
   const [conversation, setConversation] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [viewMode, setViewMode] = useState("chat"); // 'chat' or 'history'
+  const [chatHistory, setChatHistory] = useState([]);
+  const [activeVerseRef, setActiveVerseRef] = useState("");
+  const [isNewChat, setIsNewChat] = useState(true);
+  const [currentChatId, setCurrentChatId] = useState(null);
   const scrollViewRef = useRef(null);
   const userMessageToScrollRef = useRef(null);
   const messageRefs = useRef([]);
@@ -49,6 +56,20 @@ const ExpoundBottomSheet = ({
   const animatedProgress = useSharedValue(0);
   const startY = useSharedValue(0);
 
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const historyJson = await AsyncStorage.getItem("chatHistory");
+        if (historyJson) {
+          setChatHistory(JSON.parse(historyJson));
+        }
+      } catch (e) {
+        console.error("Failed to load chat history.", e);
+      }
+    };
+    loadHistory();
+  }, []);
+
   const panGesture = Gesture.Pan()
     .onStart(() => {
       startY.value = translateY.value;
@@ -56,12 +77,22 @@ const ExpoundBottomSheet = ({
     .onUpdate((event) => {
       translateY.value = Math.max(0, startY.value + event.translationY);
     })
-    .onEnd(() => {
-      if (translateY.value > height * 0.3) {
+    .onEnd((event) => {
+      const snapPointHalf = height * 0.45;
+      const closeThreshold = height * 0.7;
+      const projectedY = translateY.value + 0.1 * event.velocityY;
+      if (projectedY > closeThreshold) {
         runOnJS(onDismiss)();
-      } else {
-        translateY.value = withSpring(0, { damping: 15 });
+        return;
       }
+      const snapPoints = [0, snapPointHalf];
+      const closestSnapPoint = snapPoints.reduce((prev, curr) =>
+        Math.abs(curr - projectedY) < Math.abs(prev - projectedY) ? curr : prev
+      );
+      translateY.value = withSpring(closestSnapPoint, {
+        damping: 15,
+        stiffness: 100,
+      });
     });
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -87,40 +118,98 @@ const ExpoundBottomSheet = ({
     return `${firstVerse}-${lastVerse}`;
   };
 
-  const verseRef = `${book?.name} ${chapter}:${getVerseRange()}`;
-  const title = `Expound on ${verseRef}`;
+  const title = `Expound on ${activeVerseRef}`;
 
   useEffect(() => {
     if (visible) {
       translateY.value = withSpring(0, { damping: 15 });
       animatedProgress.value = withTiming(1);
-      const verseText = selectedVerses
-        .map((v) => decode(v.text.replace(/<[^>]+>/g, "")))
-        .join(" ");
-      const prompt = `Expound\n\n"${verseText}"\n\n${verseRef}`;
-      const initialConversation = [{ role: "user", content: prompt }];
-      setConversation(initialConversation);
-      handleResponse(initialConversation);
+
+      if (isNewChat) {
+        const verseRef = `${book?.name} ${chapter}:${getVerseRange()}`;
+        setActiveVerseRef(verseRef);
+        const verseText = selectedVerses
+          .map((v) => decode(v.text.replace(/<[^>]+>/g, "")))
+          .join(" ");
+        const prompt = `Expound\n\n"${verseText}"\n\n${verseRef}`;
+        const initialConversation = [{ role: "user", content: prompt }];
+        setConversation(initialConversation);
+        handleResponse(initialConversation, true);
+      }
     } else {
       translateY.value = withTiming(height, { duration: 300 });
       animatedProgress.value = withTiming(0);
+      // Reset state on close, but keep history loaded
       setConversation([]);
       setNewMessage("");
+      setViewMode("chat");
+      setIsNewChat(true);
+      setCurrentChatId(null);
+      setActiveVerseRef("");
     }
-  }, [visible, height]);
+  }, [visible, isNewChat]);
 
-  const handleResponse = async (currentConversation) => {
+  const saveChat = useCallback(
+    async (chatToSave, ref) => {
+      try {
+        const newChat = {
+          id: Date.now(),
+          verseRef: ref,
+          conversation: chatToSave,
+          timestamp: new Date().toISOString(),
+        };
+        setCurrentChatId(newChat.id);
+        const updatedHistory = [newChat, ...chatHistory];
+        setChatHistory(updatedHistory);
+        await AsyncStorage.setItem(
+          "chatHistory",
+          JSON.stringify(updatedHistory)
+        );
+      } catch (e) {
+        console.error("Failed to save chat.", e);
+      }
+    },
+    [chatHistory]
+  );
+
+  const updateChat = useCallback(
+    async (chatToUpdate) => {
+      if (!currentChatId) return;
+      try {
+        const updatedHistory = chatHistory.map((chat) =>
+          chat.id === currentChatId
+            ? { ...chat, conversation: chatToUpdate }
+            : chat
+        );
+        setChatHistory(updatedHistory);
+        await AsyncStorage.setItem(
+          "chatHistory",
+          JSON.stringify(updatedHistory)
+        );
+      } catch (e) {
+        console.error("Failed to update chat.", e);
+      }
+    },
+    [chatHistory, currentChatId]
+  );
+
+  const handleResponse = async (currentConversation, isFirst = false) => {
     setIsStreaming(true);
     setConversation((prev) => [...prev, { role: "model", content: "" }]);
     try {
       const result = await expoundVerse({ conversation: currentConversation });
       const resultText = result.text;
-      setConversation((prev) => {
-        const newConversation = [...prev];
-        const lastMessage = newConversation[newConversation.length - 1];
-        lastMessage.content = resultText;
-        return newConversation;
-      });
+      const finalConversation = [
+        ...currentConversation,
+        { role: "model", content: resultText },
+      ];
+      setConversation(finalConversation);
+
+      if (isFirst && isNewChat) {
+        runOnJS(saveChat)(finalConversation, activeVerseRef);
+      } else if (!isNewChat) {
+        runOnJS(updateChat)(finalConversation);
+      }
     } catch (error) {
       setConversation((prev) => {
         const newConversation = [...prev];
@@ -148,11 +237,38 @@ const ExpoundBottomSheet = ({
     handleResponse(newConversation);
   };
 
+  const handleSelectChat = (chat) => {
+    setConversation(chat.conversation);
+    setActiveVerseRef(chat.verseRef);
+    setCurrentChatId(chat.id);
+    setIsNewChat(false);
+    setViewMode("chat");
+  };
+
+  const handleDismiss = () => {
+    onDismiss();
+  };
+
+  const renderHistoryItem = ({ item }) => (
+    <Pressable
+      onPress={() => handleSelectChat(item)}
+      style={styles.historyItem}
+    >
+      <Text style={styles.historyItemTitle}>{item.verseRef}</Text>
+      <Text style={styles.historyItemSnippet} numberOfLines={2}>
+        {item.conversation[1]?.content || "..."}
+      </Text>
+      <Text style={styles.historyItemDate}>
+        {new Date(item.timestamp).toLocaleDateString()}
+      </Text>
+    </Pressable>
+  );
+
   return (
     <Portal>
       <Modal
         visible={visible}
-        onDismiss={onDismiss}
+        onDismiss={handleDismiss}
         contentContainerStyle={styles.modalContainer}
       >
         <Animated.View
@@ -162,107 +278,127 @@ const ExpoundBottomSheet = ({
             backdropAnimatedStyle,
           ]}
         >
-          <Pressable onPress={onDismiss} style={StyleSheet.absoluteFill} />
+          <Pressable onPress={handleDismiss} style={StyleSheet.absoluteFill} />
         </Animated.View>
         <GestureDetector gesture={panGesture}>
           <Animated.View style={[styles.container, animatedStyle]}>
             <View style={styles.handle} />
             <View style={styles.header} ref={headerRef}>
-              <IconButton
-                icon="history"
-                size={24}
-                onPress={() => {
-                  /* Handle past chats view */
-                }}
-                style={styles.headerIcon}
-              />
-              <Text style={styles.title}>{title}</Text>
+              {viewMode === "chat" ? (
+                <IconButton
+                  icon="history"
+                  size={24}
+                  onPress={() => setViewMode("history")}
+                  style={styles.headerIcon}
+                />
+              ) : (
+                <IconButton
+                  icon="arrow-left"
+                  size={24}
+                  onPress={() => setViewMode("chat")}
+                  style={styles.headerIcon}
+                />
+              )}
+              <Text style={styles.title} numberOfLines={1}>
+                {viewMode === "chat" ? title : "Chat History"}
+              </Text>
               <IconButton
                 icon="close"
                 size={24}
-                onPress={onDismiss}
+                onPress={handleDismiss}
                 style={styles.headerIcon}
               />
             </View>
-            <ScrollView
-              style={styles.responseContainer}
-              ref={scrollViewRef}
-              contentContainerStyle={styles.scrollContentContainer}
-            >
-              {conversation.map((message, index) => {
-                const messageRef = React.createRef();
-                return (
-                  <View
-                    key={index}
-                    ref={(el) => (messageRefs.current[index] = el)}
-                    style={[
-                      styles.messageContainer,
-                      message.role === "user"
-                        ? styles.userMessageContainer
-                        : styles.modelMessageContainer,
-                    ]}
-                    onLayout={(event) => {
-                      if (userMessageToScrollRef.current === index) {
-                        setTimeout(() => {
-                          const layout = event.nativeEvent.layout;
-                          scrollViewRef.current?.scrollTo({
-                            y: layout.y,
-                            animated: true,
-                          });
-                          userMessageToScrollRef.current = null;
-                        }, 100);
-                      }
-                    }}
-                  >
-                    {message.role === "model" ? (
-                      <MarkdownDisplay
-                        style={{
-                          body: styles.responseText,
-                          heading1: {
-                            fontSize: 22,
-                            fontWeight: "bold",
-                            marginBottom: 10,
-                          },
-                          strong: { fontWeight: "bold" },
-                        }}
-                      >
-                        {message.content}
-                      </MarkdownDisplay>
-                    ) : (
-                      <Text style={styles.userMessageText}>
-                        {message.content}
-                      </Text>
-                    )}
-                  </View>
-                );
-              })}
-              {isStreaming &&
-                conversation[conversation.length - 1]?.role === "model" && (
-                  <View style={{ marginVertical: 10 }}>
-                    <SkeletonLoader count={5} />
-                  </View>
-                )}
-            </ScrollView>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.textInput}
-                value={newMessage}
-                onChangeText={setNewMessage}
-                placeholder="Ask a follow up question..."
-                mode="flat"
-                dense
-                // multiline
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                backgroundColor="transparent"
-                onSubmitEditing={handleSendMessage}
+            {viewMode === "chat" ? (
+              <ScrollView
+                style={styles.responseContainer}
+                ref={scrollViewRef}
+                contentContainerStyle={styles.scrollContentContainer}
+              >
+                {conversation.map((message, index) => {
+                  const messageRef = React.createRef();
+                  return (
+                    <View
+                      key={index}
+                      ref={(el) => (messageRefs.current[index] = el)}
+                      style={[
+                        styles.messageContainer,
+                        message.role === "user"
+                          ? styles.userMessageContainer
+                          : styles.modelMessageContainer,
+                      ]}
+                      onLayout={(event) => {
+                        if (userMessageToScrollRef.current === index) {
+                          setTimeout(() => {
+                            const layout = event.nativeEvent.layout;
+                            scrollViewRef.current?.scrollTo({
+                              y: layout.y,
+                              animated: true,
+                            });
+                            userMessageToScrollRef.current = null;
+                          }, 100);
+                        }
+                      }}
+                    >
+                      {message.role === "model" ? (
+                        <MarkdownDisplay
+                          style={{
+                            body: styles.responseText,
+                            heading1: {
+                              fontSize: 22,
+                              fontWeight: "bold",
+                              marginBottom: 10,
+                            },
+                            strong: { fontWeight: "bold" },
+                          }}
+                        >
+                          {message.content}
+                        </MarkdownDisplay>
+                      ) : (
+                        <Text style={styles.userMessageText}>
+                          {message.content}
+                        </Text>
+                      )}
+                    </View>
+                  );
+                })}
+                {isStreaming &&
+                  conversation[conversation.length - 1]?.role === "model" && (
+                    <View style={{ marginVertical: 10 }}>
+                      <SkeletonLoader count={5} />
+                    </View>
+                  )}
+              </ScrollView>
+            ) : (
+              <FlatList
+                data={chatHistory}
+                renderItem={renderHistoryItem}
+                keyExtractor={(item) => item.id.toString()}
+                style={styles.responseContainer}
               />
-              <IconButton
-                icon="send"
-                onPress={handleSendMessage}
-                disabled={isStreaming || newMessage.trim() === ""}
-              />
-            </View>
+            )}
+            {viewMode === "chat" && (
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  value={newMessage}
+                  onChangeText={setNewMessage}
+                  placeholder="Ask a follow up question..."
+                  mode="flat"
+                  dense
+                  // multiline
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  backgroundColor="transparent"
+                  onSubmitEditing={handleSendMessage}
+                />
+                <IconButton
+                  icon="send"
+                  onPress={handleSendMessage}
+                  disabled={isStreaming || newMessage.trim() === ""}
+                />
+              </View>
+            )}
           </Animated.View>
         </GestureDetector>
       </Modal>
@@ -321,6 +457,7 @@ const getStyles = (theme) =>
     },
     modelMessageContainer: {
       alignSelf: "flex-start",
+      paddingTop: 12,
     },
     userMessageText: {
       fontSize: 16,
@@ -349,6 +486,27 @@ const getStyles = (theme) =>
       flex: 1,
       backgroundColor: "transparent",
       paddingVertical: 0,
+    },
+    historyItem: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.outline,
+    },
+    historyItemTitle: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: theme.colors.onSurface,
+      marginBottom: 4,
+    },
+    historyItemSnippet: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 4,
+    },
+    historyItemDate: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+      textAlign: "right",
     },
   });
 
