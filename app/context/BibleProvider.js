@@ -32,6 +32,7 @@ export function BibleProvider({ children }) {
   const [fontSize, setFontSize] = useState(18);
   const [lineHeight, setLineHeight] = useState(28);
   const [fontFamily, setFontFamily] = useState(undefined);
+  const [isHistoryViewOpen, setHistoryViewOpen] = useState(false);
 
   // State to hold initial values from storage
   const [initialState, setInitialState] = useState(null);
@@ -45,6 +46,9 @@ export function BibleProvider({ children }) {
     setLineHeight((prev) => prev + LINE_HEIGHT_STEP);
   const decreaseLineHeight = () =>
     setLineHeight((prev) => prev - LINE_HEIGHT_STEP);
+
+  const openHistoryView = () => setHistoryViewOpen(true);
+  const closeHistoryView = () => setHistoryViewOpen(false);
 
   // 1. Load settings from storage on mount
   useEffect(() => {
@@ -185,6 +189,9 @@ export function BibleProvider({ children }) {
     decreaseFontSize,
     increaseLineHeight,
     decreaseLineHeight,
+    isHistoryViewOpen,
+    openHistoryView,
+    closeHistoryView,
   };
 
   return (

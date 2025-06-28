@@ -1,36 +1,38 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "html-entities";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
+    FlatList,
+    Pressable,
+    Animated as RNAnimated,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import {
-  Gesture,
-  GestureDetector,
-  Swipeable,
+    Gesture,
+    GestureDetector,
+    Swipeable,
 } from "react-native-gesture-handler";
 import MarkdownDisplay from "react-native-markdown-display";
 import {
-  IconButton,
-  Modal,
-  Portal,
-  Text,
-  TextInput,
-  useTheme,
+    IconButton,
+    Modal,
+    Portal,
+    Text,
+    TextInput,
+    useTheme,
 } from "react-native-paper";
 import Animated, {
-  interpolate,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+    interpolate,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import { expoundVerse } from "../../utils/gemini";
 import SkeletonLoader from "./SkeletonLoader";
@@ -278,25 +280,29 @@ const ExpoundBottomSheet = ({
   const renderHistoryItem = ({ item }) => {
     const renderRightActions = (progress, dragX) => {
       const trans = dragX.interpolate({
-        inputRange: [-80, 0],
-        outputRange: [0, 80],
+        inputRange: [-100, 0],
+        outputRange: [0, 100],
         extrapolate: "clamp",
       });
       return (
         <TouchableOpacity
-          onPress={() => handleDeleteChat(item.id)}
           style={styles.deleteButton}
+          onPress={() => handleDeleteChat(item.id)}
         >
-          <Animated.Text
+          <RNAnimated.View
             style={[
-              styles.deleteButtonText,
+              styles.deleteButton,
               {
-                transform: [{ translateX: trans }],
+                transform: [
+                  {
+                    translateX: trans,
+                  },
+                ],
               },
             ]}
           >
-            Delete
-          </Animated.Text>
+            <MaterialIcons name="delete" size={24} color="white" />
+          </RNAnimated.View>
         </TouchableOpacity>
       );
     };
@@ -338,7 +344,7 @@ const ExpoundBottomSheet = ({
         >
           <Pressable onPress={handleDismiss} style={StyleSheet.absoluteFill} />
         </Animated.View>
-        <GestureDetector gesture={panGesture}>
+        <GestureDetector gesture={Gesture.Simultaneous(panGesture)}>
           <Animated.View style={[styles.container, animatedStyle]}>
             <View style={styles.handle} />
             <View style={styles.header} ref={headerRef}>

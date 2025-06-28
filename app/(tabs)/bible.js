@@ -193,8 +193,8 @@ const BibleScreen = () => {
     lineHeight,
     fontFamily,
     selectedTranslation,
-    showHistory,
-    setShowHistory,
+    isHistoryViewOpen,
+    closeHistoryView,
   } = useBible();
 
   const [selectedVerses, setSelectedVerses] = useState([]);
@@ -236,6 +236,12 @@ const BibleScreen = () => {
       translateY.value = 0; // Reset position when selection is cleared
     }
   }, [selectedVerses]);
+
+  useEffect(() => {
+    if (isHistoryViewOpen) {
+      setBottomSheetVisible(true);
+    }
+  }, [isHistoryViewOpen]);
 
   useEffect(() => {
     setSelectedVerses([]);
@@ -293,7 +299,8 @@ const BibleScreen = () => {
   const showBottomSheet = () => setBottomSheetVisible(true);
   const hideBottomSheet = () => {
     setBottomSheetVisible(false);
-    setShowHistory(false);
+    setSelectedVerses([]);
+    closeHistoryView();
   };
 
   const openHighlightMenu = () => setHighlightMenuVisible(true);
@@ -450,6 +457,14 @@ const BibleScreen = () => {
           </ScrollView>
         </GestureDetector>
       )}
+      <ExpoundBottomSheet
+        visible={isBottomSheetVisible}
+        onDismiss={hideBottomSheet}
+        selectedVerses={selectedVerses}
+        book={selectedBook}
+        chapter={selectedChapter}
+        openInHistoryView={isHistoryViewOpen}
+      />
       {selectedVerses.length > 0 ? (
         <GestureDetector gesture={panGesture}>
           <Animated.View style={[styles.selectionOptionsBar, animatedStyle]}>
@@ -518,14 +533,6 @@ const BibleScreen = () => {
           />
         </>
       )}
-      <ExpoundBottomSheet
-        visible={isBottomSheetVisible || showHistory}
-        onDismiss={hideBottomSheet}
-        selectedVerses={selectedVerses}
-        book={selectedBook}
-        chapter={selectedChapter}
-        openInHistoryView={showHistory}
-      />
     </View>
   );
 };
