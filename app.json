@@ -2,7 +2,7 @@
   "expo": {
     "name": "native",
     "slug": "native",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "native",
@@ -12,6 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.calebcastro.xnative",
+      "buildNumber": "1",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSExceptionDomains": {
@@ -56,6 +57,12 @@
     },
     "dark": {
       "backgroundColor": "#121212"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9789e9cb-03f5-4714-b23c-67e473bc3bdc"
+      }
     }
   }
 }

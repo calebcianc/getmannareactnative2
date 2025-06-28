@@ -1,11 +1,15 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-if (!process.env.EXPO_PUBLIC_GEMINI_API_KEY) {
-  throw new Error("EXPO_PUBLIC_GEMINI_API_KEY is not set");
+// Check if API key is available
+const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.warn("EXPO_PUBLIC_GEMINI_API_KEY is not set. Gemini features will be disabled.");
 }
 
-const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({
+// Only initialize if API key is available
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+const model = genAI ? genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
   safetySettings: [
     {
@@ -25,10 +29,15 @@ const model = genAI.getGenerativeModel({
       threshold: "BLOCK_NONE",
     },
   ],
-});
+}) : null;
 
 export const expoundVerse = async ({ conversation }) => {
   try {
+    // Check if API is available
+    if (!apiKey || !model) {
+      throw new Error("Gemini API is not configured. Please check your API key.");
+    }
+
     const history = conversation
       .slice(0, -1)
       .filter((message) => message.content)
@@ -45,6 +54,9 @@ export const expoundVerse = async ({ conversation }) => {
     return { text };
   } catch (error) {
     console.error("Error generating content from Gemini:", error);
-    throw error;
+    // Return a user-friendly error message instead of throwing
+    return { 
+      text: "Sorry, I'm unable to generate a response right now. Please check your internet connection and try again." 
+    };
   }
 };
