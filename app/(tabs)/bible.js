@@ -229,6 +229,8 @@ const BibleScreen = () => {
     removeHighlight,
     getHighlight,
     getVerseKey,
+    addHighlightBatch,
+    removeHighlightBatch,
   } = useBible();
 
   const [selectedVerses, setSelectedVerses] = useState([]);
@@ -358,17 +360,20 @@ const BibleScreen = () => {
   const handleColorSelect = async (color) => {
     if (!selectedVerses.length) return;
     
+    // Batch update highlights for all selected verses
     const verseKeys = selectedVerses.map(verse => 
       getVerseKey(selectedBook.bookid, selectedChapter, verse.verse)
     );
     
-    // Apply highlight to all selected verses
-    for (const verseKey of verseKeys) {
-      await addHighlight(verseKey, color);
-    }
+    // Create a new highlights object
+    const newHighlights = { ...highlights };
+    verseKeys.forEach(verseKey => {
+      newHighlights[verseKey] = color;
+    });
     
+    // Update state and AsyncStorage once
+    await addHighlightBatch(newHighlights);
     setSelectedHighlightColor(color);
-    // Exit highlight mode after applying
     setTimeout(() => {
       setIsHighlightMode(false);
       setSelectedVerses([]);
@@ -382,11 +387,8 @@ const BibleScreen = () => {
       getVerseKey(selectedBook.bookid, selectedChapter, verse.verse)
     );
     
-    // Remove highlight from all selected verses
-    for (const verseKey of verseKeys) {
-      await removeHighlight(verseKey);
-    }
-    
+    // Batch remove highlight from all selected verses
+    await removeHighlightBatch(verseKeys);
     setIsHighlightMode(false);
     setSelectedVerses([]);
   };

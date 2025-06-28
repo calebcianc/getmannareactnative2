@@ -62,9 +62,22 @@ export function BibleProvider({ children }) {
     }
   };
 
-  const removeHighlight = async (verseKey) => {
+  // Batch add highlights
+  const addHighlightBatch = async (newHighlights) => {
+    setHighlights(newHighlights);
+    try {
+      await AsyncStorage.setItem("bibleHighlights", JSON.stringify(newHighlights));
+    } catch (e) {
+      console.error("Failed to save highlights.", e);
+    }
+  };
+
+  // Batch remove highlights
+  const removeHighlightBatch = async (verseKeys) => {
     const newHighlights = { ...highlights };
-    delete newHighlights[verseKey];
+    verseKeys.forEach((verseKey) => {
+      delete newHighlights[verseKey];
+    });
     setHighlights(newHighlights);
     try {
       await AsyncStorage.setItem("bibleHighlights", JSON.stringify(newHighlights));
@@ -234,7 +247,8 @@ export function BibleProvider({ children }) {
     closeHistoryView,
     highlights,
     addHighlight,
-    removeHighlight,
+    addHighlightBatch,
+    removeHighlightBatch,
     getHighlight,
     getVerseKey,
   };
