@@ -33,6 +33,7 @@ export function BibleProvider({ children }) {
   const [lineHeight, setLineHeight] = useState(28);
   const [fontFamily, setFontFamily] = useState(undefined);
   const [isHistoryViewOpen, setHistoryViewOpen] = useState(false);
+  const [highlights, setHighlights] = useState({});
 
   // State to hold initial values from storage
   const [initialState, setInitialState] = useState(null);
@@ -50,11 +51,45 @@ export function BibleProvider({ children }) {
   const openHistoryView = () => setHistoryViewOpen(true);
   const closeHistoryView = () => setHistoryViewOpen(false);
 
-  // 1. Load settings from storage on mount
+  // Highlight management functions
+  const addHighlight = async (verseKey, color) => {
+    const newHighlights = { ...highlights, [verseKey]: color };
+    setHighlights(newHighlights);
+    try {
+      await AsyncStorage.setItem("bibleHighlights", JSON.stringify(newHighlights));
+    } catch (e) {
+      console.error("Failed to save highlights.", e);
+    }
+  };
+
+  const removeHighlight = async (verseKey) => {
+    const newHighlights = { ...highlights };
+    delete newHighlights[verseKey];
+    setHighlights(newHighlights);
+    try {
+      await AsyncStorage.setItem("bibleHighlights", JSON.stringify(newHighlights));
+    } catch (e) {
+      console.error("Failed to save highlights.", e);
+    }
+  };
+
+  const getHighlight = (verseKey) => {
+    return highlights[verseKey] || null;
+  };
+
+  const getVerseKey = (bookId, chapter, verse) => {
+    return `${bookId}-${chapter}-${verse}`;
+  };
+
+  // 1. Load settings and highlights from storage on mount
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const settingsString = await AsyncStorage.getItem("bibleSettings");
+        const [settingsString, highlightsString] = await Promise.all([
+          AsyncStorage.getItem("bibleSettings"),
+          AsyncStorage.getItem("bibleHighlights"),
+        ]);
+        
         if (settingsString) {
           const settings = JSON.parse(settingsString);
           setInitialState(settings);
@@ -64,8 +99,13 @@ export function BibleProvider({ children }) {
           if (settings.fontSize) setFontSize(settings.fontSize);
           if (settings.lineHeight) setLineHeight(settings.lineHeight);
         }
+
+        if (highlightsString) {
+          const highlights = JSON.parse(highlightsString);
+          setHighlights(highlights);
+        }
       } catch (e) {
-        console.error("Failed to load bible settings.", e);
+        console.error("Failed to load bible settings or highlights.", e);
       } finally {
         setLoading(false); // Stop loading after attempting to read from storage
       }
@@ -192,6 +232,11 @@ export function BibleProvider({ children }) {
     isHistoryViewOpen,
     openHistoryView,
     closeHistoryView,
+    highlights,
+    addHighlight,
+    removeHighlight,
+    getHighlight,
+    getVerseKey,
   };
 
   return (

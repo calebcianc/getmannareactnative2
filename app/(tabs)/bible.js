@@ -2,23 +2,33 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { decode } from "html-entities";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { FAB, Menu, Paragraph, Text, useTheme } from "react-native-paper";
+import { FAB, Paragraph, Text, useTheme } from "react-native-paper";
 import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
+import ColorPicker from "../components/ColorPicker";
 import ExpoundBottomSheet from "../components/ExpoundBottomSheet";
 import { useBible } from "../context/BibleProvider";
+
+const HIGHLIGHT_COLORS = {
+  yellow: '#FFD700',
+  blue: '#87CEEB',
+  green: '#90EE90',
+  pink: '#FFB6C1',
+  orange: '#FFA500',
+  purple: '#DDA0DD',
+};
 
 const toSuperscript = (str) => {
   const superscripts = {
@@ -72,6 +82,11 @@ const getStyles = (theme) =>
       textDecorationLine: "underline",
       textDecorationStyle: "dotted",
       textDecorationColor: theme.colors.onSurface,
+    },
+    highlightedVerse: {
+      borderRadius: 6,
+      paddingHorizontal: 2,
+      paddingVertical: 1,
     },
     fabLeft: {
       position: "absolute",
@@ -150,6 +165,20 @@ const getStyles = (theme) =>
       color: theme.colors.onSurface,
       flexShrink: 1,
     },
+    highlightButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.colors.primary,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      marginHorizontal: 4,
+    },
+    highlightButtonText: {
+      marginLeft: 8,
+      fontWeight: "bold",
+      color: theme.colors.onPrimary,
+    },
     chaptersContainer: {
       paddingVertical: 10,
     },
@@ -195,17 +224,26 @@ const BibleScreen = () => {
     selectedTranslation,
     isHistoryViewOpen,
     closeHistoryView,
+    highlights,
+    addHighlight,
+    removeHighlight,
+    getHighlight,
+    getVerseKey,
   } = useBible();
 
   const [selectedVerses, setSelectedVerses] = useState([]);
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
   const [isHighlightMenuVisible, setHighlightMenuVisible] = useState(false);
+  const [isHighlightMode, setIsHighlightMode] = useState(false);
+  const [selectedHighlightColor, setSelectedHighlightColor] = useState(null);
   const scrollViewRef = useRef(null);
   const translateY = useSharedValue(0);
   const startY = useSharedValue(0);
 
   const dismiss = () => {
     setSelectedVerses([]);
+    setIsHighlightMode(false);
+    setSelectedHighlightColor(null);
   };
 
   const panGesture = Gesture.Pan()
@@ -306,6 +344,67 @@ const BibleScreen = () => {
   const openHighlightMenu = () => setHighlightMenuVisible(true);
   const closeHighlightMenu = () => setHighlightMenuVisible(false);
 
+  // Highlight functions
+  const toggleHighlightMode = () => {
+    if (isHighlightMode) {
+      setIsHighlightMode(false);
+      setSelectedHighlightColor(null);
+    } else {
+      setIsHighlightMode(true);
+      setSelectedHighlightColor(null);
+    }
+  };
+
+  const handleColorSelect = async (color) => {
+    if (!selectedVerses.length) return;
+    
+    const verseKeys = selectedVerses.map(verse => 
+      getVerseKey(selectedBook.bookid, selectedChapter, verse.verse)
+    );
+    
+    // Apply highlight to all selected verses
+    for (const verseKey of verseKeys) {
+      await addHighlight(verseKey, color);
+    }
+    
+    setSelectedHighlightColor(color);
+    // Exit highlight mode after applying
+    setTimeout(() => {
+      setIsHighlightMode(false);
+      setSelectedVerses([]);
+    }, 500);
+  };
+
+  const handleRemoveHighlight = async () => {
+    if (!selectedVerses.length) return;
+    
+    const verseKeys = selectedVerses.map(verse => 
+      getVerseKey(selectedBook.bookid, selectedChapter, verse.verse)
+    );
+    
+    // Remove highlight from all selected verses
+    for (const verseKey of verseKeys) {
+      await removeHighlight(verseKey);
+    }
+    
+    setIsHighlightMode(false);
+    setSelectedVerses([]);
+  };
+
+  const getVerseHighlight = (verse) => {
+    const verseKey = getVerseKey(selectedBook.bookid, selectedChapter, verse.verse);
+    return getHighlight(verseKey);
+  };
+
+  const hasExistingHighlight = () => {
+    return selectedVerses.some(verse => getVerseHighlight(verse));
+  };
+
+  const getExistingHighlightColor = () => {
+    const highlightedVerse = selectedVerses.find(verse => getVerseHighlight(verse));
+    return highlightedVerse ? getVerseHighlight(highlightedVerse) : null;
+  };
+
   const getVerseRange = (verses) => {
     if (!verses || verses.length === 0) return "";
     const verseNumbers = verses.map((v) => v.verse);
@@ -350,71 +449,13 @@ const BibleScreen = () => {
     {
       label: "Highlight",
       icon: "highlight",
-      onPress: openHighlightMenu,
-      menu: (
-        <Menu
-          visible={isHighlightMenuVisible}
-          onDismiss={closeHighlightMenu}
-          anchor={
-            <Pressable style={styles.actionButton} onPress={openHighlightMenu}>
-              <MaterialIcons
-                name="highlight"
-                size={20}
-                color={theme.colors.onSurface}
-              />
-              <Text style={styles.actionButtonText}>Highlight</Text>
-            </Pressable>
-          }
-        >
-          <Menu.Item
-            onPress={() => {}}
-            title="Yellow"
-            leadingIcon={() => (
-              <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: "yellow",
-                }}
-              />
-            )}
-          />
-          <Menu.Item
-            onPress={() => {}}
-            title="Blue"
-            leadingIcon={() => (
-              <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: "lightblue",
-                }}
-              />
-            )}
-          />
-          <Menu.Item
-            onPress={() => {}}
-            title="Green"
-            leadingIcon={() => (
-              <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 8,
-                  backgroundColor: "lightgreen",
-                }}
-              />
-            )}
-          />
-        </Menu>
-      ),
+      onPress: toggleHighlightMode,
+      isSelected: isHighlightMode,
     },
-    { label: "Notes", icon: "edit-note", onPress: () => {} },
-    { label: "Copy", icon: "content-copy", onPress: () => {} },
-    { label: "Share", icon: "share", onPress: () => {} },
-    { label: "Bookmark", icon: "bookmark-border", onPress: () => {} },
+    { label: "Notes", icon: "edit-note", onPress: () => {}, isSelected: false },
+    { label: "Copy", icon: "content-copy", onPress: () => {}, isSelected: false },
+    { label: "Share", icon: "share", onPress: () => {}, isSelected: false },
+    { label: "Bookmark", icon: "bookmark-border", onPress: () => {}, isSelected: false },
   ];
 
   return (
@@ -438,11 +479,18 @@ const BibleScreen = () => {
                 const isSelected = selectedVerses.some(
                   (v) => v.verse === verse.verse
                 );
+                const highlightColor = getVerseHighlight(verse);
 
                 return (
                   <Text
                     key={verse.verse}
-                    style={isSelected ? styles.selectedVerse : {}}
+                    style={[
+                      isSelected ? styles.selectedVerse : {},
+                      highlightColor && {
+                        ...styles.highlightedVerse,
+                        backgroundColor: HIGHLIGHT_COLORS[highlightColor],
+                      },
+                    ]}
                     onPress={() => handleVersePress(verse)}
                   >
                     {index > 0 && " "}
@@ -471,20 +519,30 @@ const BibleScreen = () => {
             <View style={styles.pullDownHandle} />
 
             <View style={styles.expoundButtonContainer}>
-              <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
-                <MaterialIcons
-                  name="manage-search"
-                  size={24}
-                  color={theme.colors.onSurface}
+              {isHighlightMode ? (
+                <ColorPicker
+                  onColorSelect={handleColorSelect}
+                  onRemoveHighlight={handleRemoveHighlight}
+                  selectedColor={selectedHighlightColor}
+                  hasExistingHighlight={hasExistingHighlight()}
+                  existingColor={getExistingHighlightColor()}
                 />
-                <Text
-                  style={styles.expoundButtonText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {expoundText}
-                </Text>
-              </Pressable>
+              ) : (
+                <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
+                  <MaterialIcons
+                    name="manage-search"
+                    size={24}
+                    color={theme.colors.onSurface}
+                  />
+                  <Text
+                    style={styles.expoundButtonText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {expoundText}
+                  </Text>
+                </Pressable>
+              )}
             </View>
 
             <ScrollView
@@ -492,24 +550,34 @@ const BibleScreen = () => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.actionsScrollView}
             >
-              {firstRowActions.map((action) =>
-                action.menu ? (
-                  React.cloneElement(action.menu, { key: action.label })
-                ) : (
-                  <Pressable
-                    key={action.label}
-                    style={styles.actionButton}
-                    onPress={action.onPress}
+              {firstRowActions.map((action) => (
+                <Pressable
+                  key={action.label}
+                  style={[
+                    styles.actionButton,
+                    action.isSelected && styles.highlightButton,
+                  ]}
+                  onPress={action.onPress}
+                >
+                  <MaterialIcons
+                    name={action.icon}
+                    size={20}
+                    color={
+                      action.isSelected
+                        ? theme.colors.onPrimary
+                        : theme.colors.onSurface
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.actionButtonText,
+                      action.isSelected && styles.highlightButtonText,
+                    ]}
                   >
-                    <MaterialIcons
-                      name={action.icon}
-                      size={20}
-                      color={theme.colors.onSurface}
-                    />
-                    <Text style={styles.actionButtonText}>{action.label}</Text>
-                  </Pressable>
-                )
-              )}
+                    {action.label}
+                  </Text>
+                </Pressable>
+              ))}
             </ScrollView>
           </Animated.View>
         </GestureDetector>
