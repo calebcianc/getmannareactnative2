@@ -2,20 +2,20 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { decode } from "html-entities";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { FAB, Paragraph, Text, useTheme } from "react-native-paper";
 import Animated, {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import ColorPicker from "../components/ColorPicker";
 import ExpoundBottomSheet from "../components/ExpoundBottomSheet";
@@ -148,6 +148,14 @@ const getStyles = (theme) =>
     },
     expoundButtonContainer: {
       marginHorizontal: 12,
+      width: '95%',
+      alignSelf: 'center',
+      minHeight: 64,
+      maxHeight: 64,
+      height: 64,
+      justifyContent: 'center',
+      alignItems: 'center',
+      display: 'flex',
     },
     expoundButton: {
       flexDirection: "row",
@@ -157,10 +165,12 @@ const getStyles = (theme) =>
       borderRadius: 16,
       paddingHorizontal: 16,
       paddingVertical: 12,
+      width: '100%',
+      height: '100%',
     },
     expoundButtonText: {
       marginLeft: 8,
-      fontSize: 16,
+      fontSize: 18,
       fontWeight: "bold",
       color: theme.colors.onSurface,
       flexShrink: 1,

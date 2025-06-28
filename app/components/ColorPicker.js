@@ -21,8 +21,10 @@ const getStyles = (theme) =>
       backgroundColor: theme.colors.surface,
       borderRadius: 16,
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 0,
       marginHorizontal: 12,
+      width: '100%',
+      height: '100%',
     },
     colorContainer: {
       flexDirection: 'row',
