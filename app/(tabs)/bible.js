@@ -3,6 +3,9 @@ import { decode } from "html-entities";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
+  Keyboard,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -212,6 +215,10 @@ const getStyles = (theme) =>
     },
   });
 
+const NOTES_LIST_MAX_HEIGHT = Dimensions.get('window').height * 0.4;
+const NOTE_LINE_HEIGHT = 20;
+const NOTE_MAX_HEIGHT = NOTE_LINE_HEIGHT * 5;
+
 const BibleScreen = () => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -250,10 +257,13 @@ const BibleScreen = () => {
   const [selectedHighlightColor, setSelectedHighlightColor] = useState(null);
   const [isNotesMode, setIsNotesMode] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [editingNote, setEditingNote] = useState(null);
   const scrollViewRef = useRef(null);
   const translateY = useSharedValue(0);
   const startY = useSharedValue(0);
   const noteInputRef = useRef(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const animatedKeyboardHeight = useSharedValue(0);
 
   const dismiss = () => {
     setSelectedVerses([]);
@@ -312,6 +322,26 @@ const BibleScreen = () => {
       }, 100);
     }
   }, [loading]);
+
+  useEffect(() => {
+    const onKeyboardShow = (e) => {
+      const height = e.endCoordinates ? e.endCoordinates.height : 0;
+      setKeyboardHeight(height);
+      animatedKeyboardHeight.value = withTiming(height, { duration: 250 });
+    };
+    const onKeyboardHide = () => {
+      setKeyboardHeight(0);
+      animatedKeyboardHeight.value = withTiming(0, { duration: 250 });
+    };
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, onKeyboardShow);
+    const hideSub = Keyboard.addListener(hideEvent, onKeyboardHide);
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleNextChapter = () => {
     if (selectedBook && selectedChapter < selectedBook.chapters) {
@@ -500,16 +530,44 @@ const BibleScreen = () => {
     setNoteText("");
   };
 
+  // Edit note handler
+  const handleEditNote = (note) => {
+    setNoteText(note.text);
+    setEditingNote(note);
+    setTimeout(() => {
+      noteInputRef.current?.focus();
+    }, 100);
+  };
+
+  // Delete note handler
+  const handleDeleteNote = async (note) => {
+    // Remove this note from all selected verses that have this note text
+    const verseKeysToDelete = selectedVerseKeys.filter(
+      (key) => notes[key] && notes[key].text === note.text
+    );
+    await addNotes(verseKeysToDelete, "");
+  };
+
+  // Update handleSaveNote to support editing
   const handleSaveNote = async () => {
     if (!selectedVerses.length || !noteText.trim()) {
       setIsNotesMode(false);
       setNoteText("");
+      setEditingNote(null);
       return;
     }
     const verseKeys = selectedVerses.map(verse => getVerseKey(selectedBook.bookid, selectedChapter, verse.verse));
     await addNotes(verseKeys, noteText.trim());
     setIsNotesMode(false);
     setNoteText("");
+    setEditingNote(null);
+  };
+
+  // Format date helper
+  const formatNoteDate = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   // Get notes for selected verses
@@ -528,6 +586,11 @@ const BibleScreen = () => {
     { label: "Share", icon: "share", onPress: handleSharePress, isSelected: false },
     { label: "Bookmark", icon: "bookmark-border", onPress: handleBookmarkPress, isSelected: false },
   ];
+
+  // Animated style for expound container
+  const keyboardAvoidingStyle = useAnimatedStyle(() => ({
+    bottom: animatedKeyboardHeight.value > 0 ? animatedKeyboardHeight.value - 90 : 15,
+  }));
 
   return (
     <View
@@ -551,6 +614,8 @@ const BibleScreen = () => {
                   (v) => v.verse === verse.verse
                 );
                 const highlightColor = getVerseHighlight(verse);
+                const verseKey = getVerseKey(selectedBook.bookid, selectedChapter, verse.verse);
+                const hasNote = !!notes[verseKey] && !!notes[verseKey].text;
 
                 return (
                   <Text
@@ -567,6 +632,9 @@ const BibleScreen = () => {
                     {index > 0 && " "}
                     <Text style={styles.verseNumber}>
                       {toSuperscript(verse.verse)}{" "}
+                      {hasNote && (
+                        <MaterialIcons name="edit-note" size={14} color={theme.colors.primary} />
+                      )}
                     </Text>
                     {decode(verse.text.replace(/<[^>]+>/g, ""))}
                   </Text>
@@ -586,7 +654,7 @@ const BibleScreen = () => {
       />
       {selectedVerses.length > 0 ? (
         <GestureDetector gesture={panGesture}>
-          <Animated.View style={[styles.selectionOptionsBar, animatedStyle]}>
+          <Animated.View style={[styles.selectionOptionsBar, animatedStyle, keyboardAvoidingStyle]}>
             <View style={styles.pullDownHandle} />
 
             <View
@@ -606,13 +674,24 @@ const BibleScreen = () => {
               ) : isNotesMode ? (
                 <View style={{ width: '100%' }}>
                   {notesForSelected.length > 0 && (
-                    <View style={{ marginBottom: 8 }}>
+                    <ScrollView style={{ marginBottom: 8, maxHeight: NOTES_LIST_MAX_HEIGHT }}>
                       {notesForSelected.map((note, idx) => (
-                        <View key={idx} style={{ backgroundColor: '#222', borderRadius: 10, padding: 10, marginBottom: 4 }}>
-                          <Text style={{ color: '#fff', fontSize: 15 }}>{note}</Text>
+                        <View key={idx} style={{ backgroundColor: '#222', borderRadius: 10, padding: 10, marginBottom: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <View style={{ flex: 1 }}>
+                            <ScrollView style={{ maxHeight: NOTE_MAX_HEIGHT }}>
+                              <Text style={{ color: '#fff', fontSize: 15, lineHeight: NOTE_LINE_HEIGHT }} numberOfLines={5}>
+                                {note.text}
+                              </Text>
+                            </ScrollView>
+                            <Text style={{ color: '#aaa', fontSize: 12, marginTop: 2 }}>{formatNoteDate(note.date)}</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', marginLeft: 8 }}>
+                            <IconButton icon="pencil" size={18} onPress={() => handleEditNote(note)} />
+                            <IconButton icon="delete" size={18} onPress={() => handleDeleteNote(note)} />
+                          </View>
                         </View>
                       ))}
-                    </View>
+                    </ScrollView>
                   )}
                   <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
                     <TextInput

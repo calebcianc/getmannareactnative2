@@ -247,9 +247,10 @@ export function BibleProvider({ children }) {
   // Add or update notes for one or more verseKeys
   const addNotes = async (verseKeys, noteText) => {
     const newNotes = { ...notes };
+    const now = new Date().toISOString();
     verseKeys.forEach((key) => {
       if (noteText && noteText.trim().length > 0) {
-        newNotes[key] = noteText;
+        newNotes[key] = { text: noteText, date: now };
       } else {
         delete newNotes[key];
       }
@@ -259,9 +260,17 @@ export function BibleProvider({ children }) {
 
   // Get all notes for a set of verseKeys
   const getNotesForVerses = (verseKeys) => {
+    // Return unique notes (by text) for the selected verses, including date
+    const seen = new Set();
     return verseKeys
       .map((key) => notes[key])
-      .filter((note, idx, arr) => note && arr.indexOf(note) === idx); // unique notes only
+      .filter(
+        (note) =>
+          note &&
+          note.text &&
+          !seen.has(note.text) &&
+          seen.add(note.text)
+      );
   };
 
   const value = {
