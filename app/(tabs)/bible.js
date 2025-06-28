@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { FAB, Paragraph, Text, useTheme } from "react-native-paper";
+import { FAB, IconButton, Paragraph, Text, TextInput, useTheme } from "react-native-paper";
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -150,9 +150,6 @@ const getStyles = (theme) =>
       marginHorizontal: 12,
       width: '95%',
       alignSelf: 'center',
-      minHeight: 64,
-      maxHeight: 64,
-      height: 64,
       justifyContent: 'center',
       alignItems: 'center',
       display: 'flex',
@@ -241,6 +238,9 @@ const BibleScreen = () => {
     getVerseKey,
     addHighlightBatch,
     removeHighlightBatch,
+    notes,
+    addNotes,
+    getNotesForVerses,
   } = useBible();
 
   const [selectedVerses, setSelectedVerses] = useState([]);
@@ -248,9 +248,12 @@ const BibleScreen = () => {
   const [isHighlightMenuVisible, setHighlightMenuVisible] = useState(false);
   const [isHighlightMode, setIsHighlightMode] = useState(false);
   const [selectedHighlightColor, setSelectedHighlightColor] = useState(null);
+  const [isNotesMode, setIsNotesMode] = useState(false);
+  const [noteText, setNoteText] = useState("");
   const scrollViewRef = useRef(null);
   const translateY = useSharedValue(0);
   const startY = useSharedValue(0);
+  const noteInputRef = useRef(null);
 
   const dismiss = () => {
     setSelectedVerses([]);
@@ -356,17 +359,52 @@ const BibleScreen = () => {
   const openHighlightMenu = () => setHighlightMenuVisible(true);
   const closeHighlightMenu = () => setHighlightMenuVisible(false);
 
-  // Highlight functions
+  // Helper to clear all modes
+  const clearAllModes = () => {
+    setIsHighlightMode(false);
+    setIsNotesMode(false);
+    setSelectedHighlightColor(null);
+    setNoteText("");
+  };
+
   const toggleHighlightMode = () => {
     if (isHighlightMode) {
       setIsHighlightMode(false);
       setSelectedHighlightColor(null);
     } else {
+      clearAllModes();
       setIsHighlightMode(true);
-      setSelectedHighlightColor(null);
     }
   };
 
+  const handleNotesPress = () => {
+    if (isNotesMode) {
+      setIsNotesMode(false);
+      setNoteText("");
+    } else {
+      clearAllModes();
+      setIsNotesMode(true);
+      setTimeout(() => {
+        noteInputRef.current?.focus();
+      }, 100);
+    }
+  };
+
+  // Stateless actions
+  const handleCopyPress = () => {
+    clearAllModes();
+    // ...copy logic here
+  };
+  const handleSharePress = () => {
+    clearAllModes();
+    // ...share logic here
+  };
+  const handleBookmarkPress = () => {
+    clearAllModes();
+    // ...bookmark logic here
+  };
+
+  // Highlight functions
   const handleColorSelect = async (color) => {
     if (!selectedVerses.length) return;
     
@@ -457,6 +495,27 @@ const BibleScreen = () => {
   )}`;
   const expoundText = `Expound on ${verseRef}`;
 
+  const handleCloseNotes = () => {
+    setIsNotesMode(false);
+    setNoteText("");
+  };
+
+  const handleSaveNote = async () => {
+    if (!selectedVerses.length || !noteText.trim()) {
+      setIsNotesMode(false);
+      setNoteText("");
+      return;
+    }
+    const verseKeys = selectedVerses.map(verse => getVerseKey(selectedBook.bookid, selectedChapter, verse.verse));
+    await addNotes(verseKeys, noteText.trim());
+    setIsNotesMode(false);
+    setNoteText("");
+  };
+
+  // Get notes for selected verses
+  const selectedVerseKeys = selectedVerses.map(verse => getVerseKey(selectedBook.bookid, selectedChapter, verse.verse));
+  const notesForSelected = getNotesForVerses(selectedVerseKeys);
+
   const firstRowActions = [
     {
       label: "Highlight",
@@ -464,10 +523,10 @@ const BibleScreen = () => {
       onPress: toggleHighlightMode,
       isSelected: isHighlightMode,
     },
-    { label: "Notes", icon: "edit-note", onPress: () => {}, isSelected: false },
-    { label: "Copy", icon: "content-copy", onPress: () => {}, isSelected: false },
-    { label: "Share", icon: "share", onPress: () => {}, isSelected: false },
-    { label: "Bookmark", icon: "bookmark-border", onPress: () => {}, isSelected: false },
+    { label: "Notes", icon: "edit-note", onPress: handleNotesPress, isSelected: isNotesMode },
+    { label: "Copy", icon: "content-copy", onPress: handleCopyPress, isSelected: false },
+    { label: "Share", icon: "share", onPress: handleSharePress, isSelected: false },
+    { label: "Bookmark", icon: "bookmark-border", onPress: handleBookmarkPress, isSelected: false },
   ];
 
   return (
@@ -530,7 +589,12 @@ const BibleScreen = () => {
           <Animated.View style={[styles.selectionOptionsBar, animatedStyle]}>
             <View style={styles.pullDownHandle} />
 
-            <View style={styles.expoundButtonContainer}>
+            <View
+              style={[
+                styles.expoundButtonContainer,
+                !isNotesMode && { minHeight: 64, height: 64 },
+              ]}
+            >
               {isHighlightMode ? (
                 <ColorPicker
                   onColorSelect={handleColorSelect}
@@ -539,6 +603,38 @@ const BibleScreen = () => {
                   hasExistingHighlight={hasExistingHighlight()}
                   existingColor={getExistingHighlightColor()}
                 />
+              ) : isNotesMode ? (
+                <View style={{ width: '100%' }}>
+                  {notesForSelected.length > 0 && (
+                    <View style={{ marginBottom: 8 }}>
+                      {notesForSelected.map((note, idx) => (
+                        <View key={idx} style={{ backgroundColor: '#222', borderRadius: 10, padding: 10, marginBottom: 4 }}>
+                          <Text style={{ color: '#fff', fontSize: 15 }}>{note}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+                    <TextInput
+                      ref={noteInputRef}
+                      value={noteText}
+                      onChangeText={setNoteText}
+                      placeholder="Write a note..."
+                      style={{ flex: 1, backgroundColor: 'transparent' }}
+                      autoFocus
+                      underlineColor="transparent"
+                      activeUnderlineColor="transparent"
+                    />
+                    {noteText.length > 0 ? (
+                      <>
+                        <IconButton icon="close" onPress={handleCloseNotes} />
+                        <IconButton icon="check" onPress={handleSaveNote} />
+                      </>
+                    ) : (
+                      <IconButton icon="close" onPress={handleCloseNotes} />
+                    )}
+                  </View>
+                </View>
               ) : (
                 <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
                   <MaterialIcons

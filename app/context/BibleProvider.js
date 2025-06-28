@@ -34,6 +34,7 @@ export function BibleProvider({ children }) {
   const [fontFamily, setFontFamily] = useState(undefined);
   const [isHistoryViewOpen, setHistoryViewOpen] = useState(false);
   const [highlights, setHighlights] = useState({});
+  const [notes, setNotes] = useState({});
 
   // State to hold initial values from storage
   const [initialState, setInitialState] = useState(null);
@@ -218,6 +219,51 @@ export function BibleProvider({ children }) {
     }
   }, [selectedBook, selectedChapter, selectedTranslation]);
 
+  // Load notes from storage on mount
+  useEffect(() => {
+    const loadNotes = async () => {
+      try {
+        const notesString = await AsyncStorage.getItem("bibleNotes");
+        if (notesString) {
+          setNotes(JSON.parse(notesString));
+        }
+      } catch (e) {
+        console.error("Failed to load notes.", e);
+      }
+    };
+    loadNotes();
+  }, []);
+
+  // Save notes to storage
+  const saveNotes = async (newNotes) => {
+    setNotes(newNotes);
+    try {
+      await AsyncStorage.setItem("bibleNotes", JSON.stringify(newNotes));
+    } catch (e) {
+      console.error("Failed to save notes.", e);
+    }
+  };
+
+  // Add or update notes for one or more verseKeys
+  const addNotes = async (verseKeys, noteText) => {
+    const newNotes = { ...notes };
+    verseKeys.forEach((key) => {
+      if (noteText && noteText.trim().length > 0) {
+        newNotes[key] = noteText;
+      } else {
+        delete newNotes[key];
+      }
+    });
+    await saveNotes(newNotes);
+  };
+
+  // Get all notes for a set of verseKeys
+  const getNotesForVerses = (verseKeys) => {
+    return verseKeys
+      .map((key) => notes[key])
+      .filter((note, idx, arr) => note && arr.indexOf(note) === idx); // unique notes only
+  };
+
   const value = {
     loading,
     translations: ALLOWED_TRANSLATIONS,
@@ -251,6 +297,9 @@ export function BibleProvider({ children }) {
     removeHighlightBatch,
     getHighlight,
     getVerseKey,
+    notes,
+    addNotes,
+    getNotesForVerses,
   };
 
   return (
