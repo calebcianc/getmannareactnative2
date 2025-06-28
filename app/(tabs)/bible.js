@@ -676,14 +676,14 @@ const BibleScreen = () => {
                   {notesForSelected.length > 0 && (
                     <ScrollView style={{ marginBottom: 8, maxHeight: NOTES_LIST_MAX_HEIGHT }}>
                       {notesForSelected.map((note, idx) => (
-                        <View key={idx} style={{ backgroundColor: '#222', borderRadius: 10, padding: 10, marginBottom: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <View key={idx} style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: 10, padding: 10, marginBottom: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                           <View style={{ flex: 1 }}>
                             <ScrollView style={{ maxHeight: NOTE_MAX_HEIGHT }}>
-                              <Text style={{ color: '#fff', fontSize: 15, lineHeight: NOTE_LINE_HEIGHT }} numberOfLines={5}>
+                              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 15, lineHeight: NOTE_LINE_HEIGHT }} numberOfLines={5}>
                                 {note.text}
                               </Text>
                             </ScrollView>
-                            <Text style={{ color: '#aaa', fontSize: 12, marginTop: 2 }}>{formatNoteDate(note.date)}</Text>
+                            <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, marginTop: 2, opacity: 0.7 }}>{formatNoteDate(note.date)}</Text>
                           </View>
                           <View style={{ flexDirection: 'row', marginLeft: 8 }}>
                             <IconButton icon="pencil" size={18} onPress={() => handleEditNote(note)} />
