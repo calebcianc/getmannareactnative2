@@ -148,6 +148,7 @@ function BibleHeader() {
         margin: 5,
         borderRadius: 8,
         backgroundColor: theme.colors.surfaceVariant,
+        minWidth: 80,
       }}
       onPress={() => onSelectTranslation(item)}
     >
@@ -296,11 +297,11 @@ function BibleHeader() {
           >
             <View style={{ maxHeight: height * 0.7 }}>
               <FlatList
-                key="translation-list"
+                key="translation-list-1col"
                 data={translations}
                 keyExtractor={(item) => item.short_name}
                 renderItem={renderTranslationItem}
-                numColumns={2}
+                numColumns={1}
                 contentContainerStyle={{ padding: 10 }}
               />
             </View>
