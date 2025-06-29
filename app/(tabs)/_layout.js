@@ -314,36 +314,97 @@ function BibleHeader() {
             visible={fontMenuVisible}
             onDismiss={closeFontMenu}
             anchor={<IconButton icon={moreVertIcon} onPress={openFontMenu} />}
+            style={{ marginTop: 56 }}
             contentStyle={{
               backgroundColor: theme.colors.surface,
               borderRadius: 12,
+              padding: 12,
+              minWidth: 240,
             }}
           >
-            <Menu.Item
-              onPress={toggleTheme}
-              title={isDarkTheme ? "Light mode" : "Dark mode"}
-              leadingIcon={themeIcon}
-            />
-            <Menu.Item
-              onPress={decreaseFontSize}
-              title="Decrease font size"
-              leadingIcon={textDecreaseIcon}
-            />
-            <Menu.Item
-              onPress={increaseFontSize}
-              title="Increase font size"
-              leadingIcon={textIncreaseIcon}
-            />
-            <Menu.Item
-              onPress={decreaseLineHeight}
-              title="Decrease line height"
-              leadingIcon={unfoldLessIcon}
-            />
-            <Menu.Item
-              onPress={increaseLineHeight}
-              title="Increase line height"
-              leadingIcon={unfoldMoreIcon}
-            />
+            <View style={{ gap: 16 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                }}
+              >
+                <IconButton
+                  icon={MaterialIcon("wb-sunny")}
+                  onPress={() => {
+                    if (isDarkTheme) toggleTheme();
+                  }}
+                  selected={!isDarkTheme}
+                  size={28}
+                  accessibilityLabel="Light mode"
+                />
+                <IconButton
+                  icon={MaterialIcon("dark-mode")}
+                  onPress={() => {
+                    if (!isDarkTheme) toggleTheme();
+                  }}
+                  selected={isDarkTheme}
+                  size={28}
+                  accessibilityLabel="Dark mode"
+                />
+                <IconButton
+                  icon={MaterialIcon("settings")}
+                  onPress={() => {
+                    /* TODO: implement system theme if available */
+                  }}
+                  size={28}
+                  disabled
+                  accessibilityLabel="System theme (not implemented)"
+                />
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                }}
+              >
+                <IconButton
+                  icon={textDecreaseIcon}
+                  onPress={decreaseFontSize}
+                  size={28}
+                  accessibilityLabel="Decrease font size"
+                />
+                <Text style={{ fontSize: 16, alignSelf: "center" }}>
+                  Font size
+                </Text>
+                <IconButton
+                  icon={textIncreaseIcon}
+                  onPress={increaseFontSize}
+                  size={28}
+                  accessibilityLabel="Increase font size"
+                />
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                }}
+              >
+                <IconButton
+                  icon={unfoldLessIcon}
+                  onPress={decreaseLineHeight}
+                  size={28}
+                  accessibilityLabel="Decrease line height"
+                />
+                <Text style={{ fontSize: 16, alignSelf: "center" }}>
+                  Line height
+                </Text>
+                <IconButton
+                  icon={unfoldMoreIcon}
+                  onPress={increaseLineHeight}
+                  size={28}
+                  accessibilityLabel="Increase line height"
+                />
+              </View>
+            </View>
           </Menu>
           <IconButton icon="history" onPress={openHistoryView} />
         </View>
