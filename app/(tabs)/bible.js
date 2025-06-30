@@ -2,23 +2,23 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { decode } from "html-entities";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  Keyboard,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    Keyboard,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { FAB, IconButton, Paragraph, Text, TextInput, useTheme } from "react-native-paper";
 import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import ColorPicker from "../components/ColorPicker";
 import ExpoundBottomSheet from "../components/ExpoundBottomSheet";
@@ -52,7 +52,7 @@ const toSuperscript = (str) => {
     .join("");
 };
 
-const getStyles = (theme) =>
+const getStyles = (theme, marginSize = 20) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -63,7 +63,7 @@ const getStyles = (theme) =>
       alignItems: "center",
     },
     content: {
-      paddingHorizontal: 20,
+      paddingHorizontal: marginSize,
       paddingTop: 10,
       paddingBottom: 200,
     },
@@ -221,7 +221,8 @@ const NOTE_MAX_HEIGHT = NOTE_LINE_HEIGHT * 5;
 
 const BibleScreen = () => {
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const { marginSize, ...bibleContext } = useBible();
+  const styles = getStyles(theme, marginSize);
   const {
     loading,
     verses,
@@ -248,7 +249,7 @@ const BibleScreen = () => {
     notes,
     addNotes,
     getNotesForVerses,
-  } = useBible();
+  } = bibleContext;
 
   const [selectedVerses, setSelectedVerses] = useState([]);
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);

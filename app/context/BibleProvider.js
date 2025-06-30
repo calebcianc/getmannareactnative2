@@ -35,6 +35,10 @@ export function BibleProvider({ children }) {
   const [isHistoryViewOpen, setHistoryViewOpen] = useState(false);
   const [highlights, setHighlights] = useState({});
   const [notes, setNotes] = useState({});
+  const [marginSize, setMarginSize] = useState(20); // default 20px
+  const MARGIN_STEP = 4;
+  const MIN_MARGIN = 0;
+  const MAX_MARGIN = 64;
 
   // State to hold initial values from storage
   const [initialState, setInitialState] = useState(null);
@@ -48,6 +52,9 @@ export function BibleProvider({ children }) {
     setLineHeight((prev) => prev + LINE_HEIGHT_STEP);
   const decreaseLineHeight = () =>
     setLineHeight((prev) => prev - LINE_HEIGHT_STEP);
+
+  const increaseMargin = () => setMarginSize((prev) => Math.min(prev + MARGIN_STEP, MAX_MARGIN));
+  const decreaseMargin = () => setMarginSize((prev) => Math.max(prev - MARGIN_STEP, MIN_MARGIN));
 
   const openHistoryView = () => setHistoryViewOpen(true);
   const closeHistoryView = () => setHistoryViewOpen(false);
@@ -112,6 +119,7 @@ export function BibleProvider({ children }) {
             setSelectedTranslation(settings.selectedTranslation);
           if (settings.fontSize) setFontSize(settings.fontSize);
           if (settings.lineHeight) setLineHeight(settings.lineHeight);
+          if (settings.marginSize !== undefined) setMarginSize(settings.marginSize);
         }
 
         if (highlightsString) {
@@ -139,6 +147,7 @@ export function BibleProvider({ children }) {
           selectedChapter,
           fontSize,
           lineHeight,
+          marginSize,
         };
         const settingsString = JSON.stringify(settings);
         await AsyncStorage.setItem("bibleSettings", settingsString);
@@ -153,6 +162,7 @@ export function BibleProvider({ children }) {
     selectedChapter,
     fontSize,
     lineHeight,
+    marginSize,
     loading,
   ]);
 
@@ -309,6 +319,9 @@ export function BibleProvider({ children }) {
     notes,
     addNotes,
     getNotesForVerses,
+    marginSize,
+    increaseMargin,
+    decreaseMargin,
   };
 
   return (

@@ -3,14 +3,14 @@ import { Tabs } from "expo-router";
 import { useCallback, useState } from "react";
 import { FlatList, Pressable, View, useWindowDimensions } from "react-native";
 import {
-  Appbar,
-  Button,
-  Divider,
-  IconButton,
-  Menu,
-  Portal,
-  Text,
-  useTheme,
+    Appbar,
+    Button,
+    Divider,
+    IconButton,
+    Menu,
+    Portal,
+    Text,
+    useTheme,
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BookName } from "../components/BookName";
@@ -38,6 +38,9 @@ function BibleHeader() {
     translations,
     setScrollPosition,
     openHistoryView,
+    marginSize,
+    increaseMargin,
+    decreaseMargin,
   } = useBible();
   const { height } = useWindowDimensions();
   const { toggleTheme, isDarkTheme } = useThemeContext();
@@ -402,6 +405,30 @@ function BibleHeader() {
                   onPress={increaseLineHeight}
                   size={28}
                   accessibilityLabel="Increase line height"
+                />
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                }}
+              >
+                <IconButton
+                  icon={unfoldLessIcon}
+                  onPress={decreaseMargin}
+                  size={28}
+                  accessibilityLabel="Decrease margin"
+                />
+                <Text style={{ fontSize: 16, alignSelf: "center" }}>
+                  Margin
+                  <Text style={{ fontWeight: 'bold' }}> {marginSize}px</Text>
+                </Text>
+                <IconButton
+                  icon={unfoldMoreIcon}
+                  onPress={increaseMargin}
+                  size={28}
+                  accessibilityLabel="Increase margin"
                 />
               </View>
             </View>
