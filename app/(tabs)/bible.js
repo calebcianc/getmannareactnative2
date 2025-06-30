@@ -22,7 +22,7 @@ import Animated, {
 } from "react-native-reanimated";
 import ColorPicker from "../components/ColorPicker";
 // import ExpoundBottomSheet from "../components/ExpoundBottomSheet";
-import GorhomBottomSheet from "../components/GorhomBottomSheet";
+import { useBottomSheet } from "../_layout";
 import { useBible } from "../context/BibleProvider";
 
 const HIGHLIGHT_COLORS = {
@@ -253,7 +253,6 @@ const BibleScreen = () => {
   } = bibleContext;
 
   const [selectedVerses, setSelectedVerses] = useState([]);
-  const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
   const [isHighlightMenuVisible, setHighlightMenuVisible] = useState(false);
   const [isHighlightMode, setIsHighlightMode] = useState(false);
   const [selectedHighlightColor, setSelectedHighlightColor] = useState(null);
@@ -266,6 +265,7 @@ const BibleScreen = () => {
   const noteInputRef = useRef(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const animatedKeyboardHeight = useSharedValue(0);
+  const { showBottomSheet } = useBottomSheet();
 
   const dismiss = () => {
     setSelectedVerses([]);
@@ -304,7 +304,12 @@ const BibleScreen = () => {
 
   useEffect(() => {
     if (isHistoryViewOpen) {
-      setBottomSheetVisible(true);
+      showBottomSheet({
+        selectedVerses,
+        book: selectedBook,
+        chapter: selectedChapter,
+        openInHistoryView: isHistoryViewOpen,
+      });
     }
   }, [isHistoryViewOpen]);
 
@@ -379,13 +384,6 @@ const BibleScreen = () => {
         return newSelectedVerses;
       }
     });
-  };
-
-  const showBottomSheet = () => setBottomSheetVisible(true);
-  const hideBottomSheet = () => {
-    setBottomSheetVisible(false);
-    setSelectedVerses([]);
-    closeHistoryView();
   };
 
   const openHighlightMenu = () => setHighlightMenuVisible(true);
@@ -594,6 +592,15 @@ const BibleScreen = () => {
     bottom: animatedKeyboardHeight.value > 0 ? animatedKeyboardHeight.value - 90 : 15,
   }));
 
+  const handleExpoundPress = () => {
+    showBottomSheet({
+      selectedVerses,
+      book: selectedBook,
+      chapter: selectedChapter,
+      openInHistoryView: isHistoryViewOpen,
+    });
+  };
+
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -646,14 +653,6 @@ const BibleScreen = () => {
           </ScrollView>
         </GestureDetector>
       )}
-      <GorhomBottomSheet
-        visible={isBottomSheetVisible}
-        onDismiss={hideBottomSheet}
-        selectedVerses={selectedVerses}
-        book={selectedBook}
-        chapter={selectedChapter}
-        openInHistoryView={isHistoryViewOpen}
-      />
       {selectedVerses.length > 0 ? (
         <GestureDetector gesture={panGesture}>
           <Animated.View style={[styles.selectionOptionsBar, animatedStyle, keyboardAvoidingStyle]}>
@@ -717,7 +716,7 @@ const BibleScreen = () => {
                   </View>
                 </View>
               ) : (
-                <Pressable style={styles.expoundButton} onPress={showBottomSheet}>
+                <Pressable style={styles.expoundButton} onPress={handleExpoundPress}>
                   <MaterialIcons
                     name="manage-search"
                     size={24}

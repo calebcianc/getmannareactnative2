@@ -1,15 +1,23 @@
 import {
-    Poppins_400Regular,
-    Poppins_700Bold
+  Poppins_400Regular,
+  Poppins_700Bold
 } from '@expo-google-fonts/poppins';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
+import GorhomBottomSheet from './components/GorhomBottomSheet';
 import { BibleProvider } from './context/BibleProvider';
 import { ThemeProvider, useThemeContext } from './context/ThemeProvider';
+
+// Context to control the GorhomBottomSheet globally
+const BottomSheetContext = createContext();
+
+export function useBottomSheet() {
+  return useContext(BottomSheetContext);
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +35,21 @@ export default function Layout() {
     Poppins_700Bold,
   });
 
+  const [bottomSheetState, setBottomSheetState] = useState({
+    visible: false,
+    selectedVerses: [],
+    book: null,
+    chapter: null,
+    openInHistoryView: false,
+  });
+
+  const showBottomSheet = useCallback((params) => {
+    setBottomSheetState({ ...params, visible: true });
+  }, []);
+  const hideBottomSheet = useCallback(() => {
+    setBottomSheetState((prev) => ({ ...prev, visible: false }));
+  }, []);
+
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
@@ -41,7 +64,21 @@ export default function Layout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <BibleProvider>
-          <ThemedRoot />
+          <BottomSheetContext.Provider value={{
+            showBottomSheet,
+            hideBottomSheet,
+            bottomSheetState,
+          }}>
+            <ThemedRoot />
+            <GorhomBottomSheet
+              visible={bottomSheetState.visible}
+              onDismiss={hideBottomSheet}
+              selectedVerses={bottomSheetState.selectedVerses}
+              book={bottomSheetState.book}
+              chapter={bottomSheetState.chapter}
+              openInHistoryView={bottomSheetState.openInHistoryView}
+            />
+          </BottomSheetContext.Provider>
         </BibleProvider>
       </ThemeProvider>
     </GestureHandlerRootView>

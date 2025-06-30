@@ -8,7 +8,7 @@ import React, {
     useRef,
     useState,
 } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, TextInput as RNTextInput, StyleSheet, View } from "react-native";
 import {
     IconButton,
     Text,
@@ -36,6 +36,7 @@ const GorhomBottomSheet = ({
   const [activeVerseRef, setActiveVerseRef] = useState("");
   const [isNewChat, setIsNewChat] = useState(true);
   const [currentChatId, setCurrentChatId] = useState(null);
+  const [inputValue, setInputValue] = useState("");
 
   const snapPoints = useMemo(() => ["50%", "90%"], []);
 
@@ -188,6 +189,15 @@ const GorhomBottomSheet = ({
     </Pressable>
   );
 
+  const handleSend = () => {
+    if (!inputValue.trim()) return;
+    const newMessage = { role: "user", content: inputValue.trim() };
+    const updatedConversation = [...conversation, newMessage];
+    setConversation(updatedConversation);
+    setInputValue("");
+    handleResponse(updatedConversation);
+  };
+
   if (!visible) {
     return null;
   }
@@ -271,6 +281,30 @@ const GorhomBottomSheet = ({
           keyExtractor={(item) => item.id.toString()}
         />
       )}
+      {viewMode === "chat" && (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={90}
+        >
+          <View style={styles.inputContainer}>
+            <RNTextInput
+              style={styles.textInput}
+              value={inputValue}
+              onChangeText={setInputValue}
+              placeholder="Type your message..."
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+              editable={!isStreaming}
+            />
+            <IconButton
+              icon="send"
+              size={24}
+              onPress={handleSend}
+              disabled={!inputValue.trim() || isStreaming}
+            />
+          </View>
+        </KeyboardAvoidingView>
+      )}
     </BottomSheet>
   );
 };
@@ -335,6 +369,22 @@ const getStyles = (theme) =>
       fontWeight: "bold",
       color: theme.colors.onSurface,
       flexShrink: 1,
+    },
+    inputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 8,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.outline,
+      backgroundColor: theme.colors.surface,
+    },
+    textInput: {
+      flex: 1,
+      fontSize: 16,
+      padding: 8,
+      backgroundColor: theme.colors.background,
+      borderRadius: 8,
+      marginRight: 8,
     },
   });
 
