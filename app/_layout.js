@@ -9,7 +9,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import GorhomBottomSheet from './components/GorhomBottomSheet';
-import { BibleProvider } from './context/BibleProvider';
+import { BibleProvider, useBible } from './context/BibleProvider';
 import { ThemeProvider, useThemeContext } from './context/ThemeProvider';
 
 // Context to control the GorhomBottomSheet globally
@@ -29,12 +29,8 @@ function RootLayoutNav() {
   );
 }
 
-export default function Layout() {
-  const [fontsLoaded] = useFonts({
-    Poppins_400Regular,
-    Poppins_700Bold,
-  });
-
+function BottomSheetManager({ children }) {
+  const { closeHistoryView } = useBible();
   const [bottomSheetState, setBottomSheetState] = useState({
     visible: false,
     selectedVerses: [],
@@ -47,8 +43,40 @@ export default function Layout() {
     setBottomSheetState({ ...params, visible: true });
   }, []);
   const hideBottomSheet = useCallback(() => {
-    setBottomSheetState((prev) => ({ ...prev, visible: false }));
-  }, []);
+    setBottomSheetState({
+      visible: false,
+      selectedVerses: [],
+      book: null,
+      chapter: null,
+      openInHistoryView: false,
+    });
+    closeHistoryView();
+  }, [closeHistoryView]);
+
+  return (
+    <BottomSheetContext.Provider value={{
+      showBottomSheet,
+      hideBottomSheet,
+      bottomSheetState,
+    }}>
+      {children}
+      <GorhomBottomSheet
+        visible={bottomSheetState.visible}
+        onDismiss={hideBottomSheet}
+        selectedVerses={bottomSheetState.selectedVerses}
+        book={bottomSheetState.book}
+        chapter={bottomSheetState.chapter}
+        openInHistoryView={bottomSheetState.openInHistoryView}
+      />
+    </BottomSheetContext.Provider>
+  );
+}
+
+export default function Layout() {
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_700Bold,
+  });
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -64,21 +92,9 @@ export default function Layout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <BibleProvider>
-          <BottomSheetContext.Provider value={{
-            showBottomSheet,
-            hideBottomSheet,
-            bottomSheetState,
-          }}>
+          <BottomSheetManager>
             <ThemedRoot />
-            <GorhomBottomSheet
-              visible={bottomSheetState.visible}
-              onDismiss={hideBottomSheet}
-              selectedVerses={bottomSheetState.selectedVerses}
-              book={bottomSheetState.book}
-              chapter={bottomSheetState.chapter}
-              openInHistoryView={bottomSheetState.openInHistoryView}
-            />
-          </BottomSheetContext.Provider>
+          </BottomSheetManager>
         </BibleProvider>
       </ThemeProvider>
     </GestureHandlerRootView>

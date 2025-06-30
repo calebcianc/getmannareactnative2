@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetFlatList, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "html-entities";
 import React, {
@@ -8,7 +8,7 @@ import React, {
     useRef,
     useState,
 } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, TextInput as RNTextInput, StyleSheet, View } from "react-native";
+import { Animated, Pressable, StyleSheet, View } from "react-native";
 import {
     IconButton,
     Text,
@@ -37,13 +37,24 @@ const GorhomBottomSheet = ({
   const [isNewChat, setIsNewChat] = useState(true);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [inputValue, setInputValue] = useState("");
+  const [overlayOpacity] = useState(new Animated.Value(0));
 
-  const snapPoints = useMemo(() => ["50%", "90%"], []);
+  const snapPoints = useMemo(() => ["70%"], []);
 
   useEffect(() => {
     if (visible) {
+      Animated.timing(overlayOpacity, {
+        toValue: 0.5,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
       bottomSheetRef.current?.expand();
     } else {
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
       bottomSheetRef.current?.close();
     }
   }, [visible]);
@@ -203,109 +214,122 @@ const GorhomBottomSheet = ({
   }
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={0}
-      snapPoints={snapPoints}
-      onChange={(index) => {
-        if (index === -1) {
-          onDismiss();
-        }
-      }}
-      enablePanDownToClose
-      backgroundStyle={{ backgroundColor: theme.colors.surface }}
-      handleIndicatorStyle={{ backgroundColor: theme.colors.onSurfaceVariant }}
-    >
-      <View style={styles.header}>
-        {viewMode === "chat" ? (
-          <IconButton
-            icon="history"
-            size={24}
-            onPress={() => setViewMode("history")}
-            style={styles.headerIcon}
-          />
-        ) : (
-          <IconButton
-            icon="arrow-left"
-            size={24}
-            onPress={() => setViewMode("chat")}
-            style={styles.headerIcon}
-          />
-        )}
-        <Text style={styles.title} numberOfLines={1}>
-          {viewMode === "chat" ? title : "Chat History"}
-        </Text>
-        <IconButton
-          icon="close"
-          size={24}
-          onPress={onDismiss}
-          style={styles.headerIcon}
-        />
-      </View>
-      {viewMode === "chat" ? (
-        <BottomSheetFlatList
-          data={conversation}
-          keyExtractor={(_, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.messageContainer,
-                item.role === "user"
-                  ? styles.userMessageContainer
-                  : styles.modelMessageContainer,
-              ]}
-            >
-              <Text
-                style={
-                  item.role === "user"
-                    ? styles.userMessageText
-                    : styles.responseText
-                }
-              >
-                {item.content}
-              </Text>
-            </View>
-          )}
-          ListFooterComponent={
-            isStreaming ? (
-              <View style={{ marginVertical: 10 }}>
-                <SkeletonLoader count={3} />
-              </View>
-            ) : null
+    <>
+      {/* Scrim overlay */}
+      <Animated.View
+        pointerEvents={visible ? 'auto' : 'none'}
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            opacity: overlayOpacity,
+          },
+        ]}
+      >
+        <Pressable style={{ flex: 1 }} onPress={onDismiss} />
+      </Animated.View>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        onChange={(index) => {
+          if (index === -1) {
+            onDismiss();
           }
-        />
-      ) : (
-        <BottomSheetFlatList
-          data={chatHistory}
-          renderItem={renderHistoryItem}
-          keyExtractor={(item) => item.id.toString()}
-        />
-      )}
-      {viewMode === "chat" && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={90}
-        >
-          <View style={styles.inputContainer}>
-            <RNTextInput
-              style={styles.textInput}
-              value={inputValue}
-              onChangeText={setInputValue}
-              placeholder="Type your message..."
-              onSubmitEditing={handleSend}
-              returnKeyType="send"
-              editable={!isStreaming}
-            />
+        }}
+        enablePanDownToClose
+        backgroundStyle={{ backgroundColor: theme.colors.surface }}
+        handleIndicatorStyle={{ backgroundColor: theme.colors.onSurfaceVariant }}
+        style={[styles.sheetContainer, { zIndex: 1001 }]}
+      >
+        <View style={[styles.header, { paddingHorizontal: 16 }]}>
+          {viewMode === "chat" ? (
             <IconButton
-              icon="send"
+              icon="history"
               size={24}
-              onPress={handleSend}
-              disabled={!inputValue.trim() || isStreaming}
+              onPress={() => setViewMode("history")}
+              style={styles.headerIcon}
             />
-          </View>
-        </KeyboardAvoidingView>
-      )}
-    </BottomSheet>
+          ) : (
+            <IconButton
+              icon="arrow-left"
+              size={24}
+              onPress={() => setViewMode("chat")}
+              style={styles.headerIcon}
+            />
+          )}
+          <Text style={styles.title} numberOfLines={1}>
+            {viewMode === "chat" ? title : "Chat History"}
+          </Text>
+          <IconButton
+            icon="close"
+            size={24}
+            onPress={onDismiss}
+            style={styles.headerIcon}
+          />
+        </View>
+        <View style={styles.contentContainerWithPadding}>
+          {viewMode === "chat" ? (
+            <BottomSheetFlatList
+              data={conversation}
+              keyExtractor={(_, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View
+                  style={[
+                    styles.messageContainer,
+                    item.role === "user"
+                      ? styles.userMessageContainer
+                      : styles.modelMessageContainer,
+                  ]}
+                >
+                  <Text
+                    style={
+                      item.role === "user"
+                        ? styles.userMessageText
+                        : styles.responseText
+                    }
+                  >
+                    {item.content}
+                  </Text>
+                </View>
+              )}
+              ListFooterComponent={
+                isStreaming ? (
+                  <View style={{ marginVertical: 10 }}>
+                    <SkeletonLoader count={3} />
+                  </View>
+                ) : null
+              }
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+            />
+          ) : (
+            <BottomSheetFlatList
+              data={chatHistory}
+              renderItem={renderHistoryItem}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+            />
+          )}
+        </View>
+        <View style={[styles.inputContainer, { marginBottom: 24, marginHorizontal: 16 }]}> 
+          <BottomSheetTextInput
+            style={styles.textInput}
+            value={inputValue}
+            onChangeText={setInputValue}
+            placeholder="Type your message..."
+            onSubmitEditing={handleSend}
+            returnKeyType="send"
+            editable={!isStreaming}
+          />
+          <IconButton
+            icon="send"
+            size={24}
+            onPress={handleSend}
+            disabled={!inputValue.trim() || isStreaming}
+          />
+        </View>
+      </BottomSheet>
+    </>
   );
 };
 
@@ -313,6 +337,10 @@ const getStyles = (theme) =>
   StyleSheet.create({
     contentContainer: {
       padding: 16,
+    },
+    contentContainerWithPadding: {
+      flex: 1,
+      paddingHorizontal: 16,
     },
     header: {
       flexDirection: "row",
@@ -385,6 +413,21 @@ const getStyles = (theme) =>
       backgroundColor: theme.colors.background,
       borderRadius: 8,
       marginRight: 8,
+    },
+    sheetContainer: {
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      overflow: 'hidden',
+      // iOS shadow
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.18,
+      shadowRadius: 12,
+      // Android elevation
+      elevation: 16,
+      borderTopWidth: 1,
+      borderColor: theme.colors.outlineVariant || theme.colors.outline,
+      backgroundColor: theme.colors.surface,
     },
   });
 
