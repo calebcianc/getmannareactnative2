@@ -2,26 +2,27 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { decode } from "html-entities";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Dimensions,
-    Keyboard,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  Keyboard,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { FAB, IconButton, Paragraph, Text, TextInput, useTheme } from "react-native-paper";
 import Animated, {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import ColorPicker from "../components/ColorPicker";
-import ExpoundBottomSheet from "../components/ExpoundBottomSheet";
+// import ExpoundBottomSheet from "../components/ExpoundBottomSheet";
+import GorhomBottomSheet from "../components/GorhomBottomSheet";
 import { useBible } from "../context/BibleProvider";
 
 const HIGHLIGHT_COLORS = {
@@ -645,7 +646,7 @@ const BibleScreen = () => {
           </ScrollView>
         </GestureDetector>
       )}
-      <ExpoundBottomSheet
+      <GorhomBottomSheet
         visible={isBottomSheetVisible}
         onDismiss={hideBottomSheet}
         selectedVerses={selectedVerses}
