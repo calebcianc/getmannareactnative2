@@ -1,0 +1,429 @@
+import { MaterialIcons } from "@expo/vector-icons";
+import { useCallback, useState } from "react";
+import { FlatList, Pressable, View, useWindowDimensions } from "react-native";
+import {
+  Button,
+  Divider,
+  IconButton,
+  Menu,
+  Text,
+  useTheme,
+} from "react-native-paper";
+import { useBible } from "../app/context/BibleProvider";
+import { useThemeContext } from "../app/context/ThemeProvider";
+import { BookName } from "./BookName";
+
+const MaterialIcon =
+  (name) =>
+  ({ size, color }) =>
+    <MaterialIcons name={name} size={size} color={color} />;
+
+export function BibleHeader() {
+  const {
+    selectedBook,
+    setSelectedBook,
+    selectedChapter,
+    setSelectedChapter,
+    selectedTranslation,
+    setSelectedTranslation,
+    increaseFontSize,
+    decreaseFontSize,
+    increaseLineHeight,
+    decreaseLineHeight,
+    books,
+    translations,
+    setScrollPosition,
+    openHistoryView,
+    marginSize,
+    increaseMargin,
+    decreaseMargin,
+  } = useBible();
+  const { height } = useWindowDimensions();
+  const { toggleTheme, isDarkTheme } = useThemeContext();
+  const theme = useTheme();
+  const [fontMenuVisible, setFontMenuVisible] = useState(false);
+  const [bookMenuVisible, setBookMenuVisible] = useState(false);
+  const [translationMenuVisible, setTranslationMenuVisible] = useState(false);
+  const [tempSelectedBook, setTempSelectedBook] = useState(null);
+
+  const searchIcon = useCallback(MaterialIcon("search"), []);
+  const themeIcon = useCallback(
+    MaterialIcon(isDarkTheme ? "wb-sunny" : "dark-mode"),
+    [isDarkTheme]
+  );
+  const moreVertIcon = useCallback(MaterialIcon("more-vert"), []);
+  const textDecreaseIcon = useCallback(MaterialIcon("text-decrease"), []);
+  const textIncreaseIcon = useCallback(MaterialIcon("text-increase"), []);
+  const unfoldLessIcon = useCallback(MaterialIcon("unfold-less"), []);
+  const unfoldMoreIcon = useCallback(MaterialIcon("unfold-more"), []);
+  const backIcon = useCallback(MaterialIcon("arrow-back"), []);
+
+  const openFontMenu = () => setFontMenuVisible(true);
+  const closeFontMenu = () => setFontMenuVisible(false);
+
+  const openBookMenu = () => setBookMenuVisible(true);
+  const closeBookMenu = () => {
+    setBookMenuVisible(false);
+    setTempSelectedBook(null);
+  };
+
+  const openTranslationMenu = () => setTranslationMenuVisible(true);
+  const closeTranslationMenu = () => setTranslationMenuVisible(false);
+
+  const onSelectBook = (book) => {
+    setTempSelectedBook(book);
+  };
+
+  const onSelectChapter = (chapter) => {
+    setSelectedBook(tempSelectedBook);
+    setScrollPosition(0);
+    setSelectedChapter(chapter);
+    closeBookMenu();
+  };
+
+  const onSelectTranslation = (translation) => {
+    setSelectedTranslation(translation.short_name);
+    closeTranslationMenu();
+  };
+
+  const renderChapterItem = ({ item }) => (
+    <Pressable
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 12,
+        margin: 5,
+        borderRadius: 8,
+        backgroundColor: theme.colors.surfaceVariant,
+      }}
+      onPress={() => onSelectChapter(item)}
+    >
+      <Text
+        style={{
+          fontSize: 16,
+          fontWeight: "500",
+          color: theme.colors.onSurfaceVariant,
+        }}
+      >
+        {item}
+      </Text>
+    </Pressable>
+  );
+
+  const renderBookItem = ({ item }) => (
+    <Pressable
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 12,
+        margin: 5,
+        borderRadius: 8,
+        backgroundColor: theme.colors.surfaceVariant,
+      }}
+      onPress={() => onSelectBook(item)}
+    >
+      <Text
+        style={{
+          fontSize: 16,
+          fontWeight: "500",
+          color: theme.colors.onSurfaceVariant,
+          textAlign: "center",
+        }}
+      >
+        {item.name}
+      </Text>
+    </Pressable>
+  );
+
+  const renderTranslationItem = ({ item }) => (
+    <Pressable
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 12,
+        margin: 5,
+        borderRadius: 8,
+        backgroundColor: theme.colors.surfaceVariant,
+        minWidth: 80,
+      }}
+      onPress={() => onSelectTranslation(item)}
+    >
+      <Text
+        style={{
+          fontSize: 16,
+          fontWeight: "500",
+          color: theme.colors.onSurfaceVariant,
+          textAlign: "center",
+        }}
+      >
+        {item.short_name}
+      </Text>
+    </Pressable>
+  );
+
+  const bookButtonStyle = {
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    borderRightWidth: 0.5,
+  };
+  const translationButtonStyle = {
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+    borderLeftWidth: 0.5,
+  };
+  const buttonLabelStyle = {
+    fontSize: 16,
+    fontWeight: "600",
+  };
+
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flex: 1,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 8,
+        }}
+      >
+        <Menu
+          visible={bookMenuVisible}
+          onDismiss={closeBookMenu}
+          anchor={
+            <Button
+              onPress={openBookMenu}
+              disabled={translationMenuVisible}
+              // mode="outlined"
+              style={bookButtonStyle}
+              labelStyle={buttonLabelStyle}
+            >
+              {selectedBook ? (
+                <BookName
+                  book={selectedBook}
+                  chapter={selectedChapter}
+                  style={buttonLabelStyle}
+                />
+              ) : (
+                "Select Book"
+              )}
+            </Button>
+          }
+          style={{ marginTop: 52, width: "90%" }}
+          contentStyle={{
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+          }}
+        >
+          {!tempSelectedBook ? (
+            <View style={{ maxHeight: height * 0.7 }}>
+              <FlatList
+                key="book-list"
+                data={books}
+                keyExtractor={(item) => item.bookid.toString()}
+                renderItem={renderBookItem}
+                numColumns={2}
+                contentContainerStyle={{ padding: 10 }}
+              />
+            </View>
+          ) : (
+            <View style={{ maxHeight: height * 0.7 }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <IconButton
+                  icon={backIcon}
+                  onPress={() => setTempSelectedBook(null)}
+                />
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "bold",
+                    color: theme.colors.onSurface,
+                  }}
+                >
+                  {tempSelectedBook.name}
+                </Text>
+              </View>
+              <Divider />
+              <FlatList
+                key="chapter-list"
+                data={Array.from(
+                  { length: tempSelectedBook.chapters || 0 },
+                  (_, i) => i + 1
+                )}
+                renderItem={renderChapterItem}
+                keyExtractor={(item) => item.toString()}
+                numColumns={5}
+                contentContainerStyle={{ padding: 10 }}
+              />
+            </View>
+          )}
+        </Menu>
+
+        <Menu
+          visible={translationMenuVisible}
+          onDismiss={closeTranslationMenu}
+          anchor={
+            <Button
+              onPress={openTranslationMenu}
+              // disabled={bookMenuVisible}
+              // mode="outlined"
+              style={translationButtonStyle}
+              labelStyle={buttonLabelStyle}
+            >
+              {selectedTranslation}
+            </Button>
+          }
+          style={{ marginTop: 52 }}
+          contentStyle={{
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+          }}
+        >
+          <View style={{ maxHeight: height * 0.7 }}>
+            <FlatList
+              key="translation-list-1col"
+              data={translations}
+              keyExtractor={(item) => item.short_name}
+              renderItem={renderTranslationItem}
+              numColumns={1}
+              contentContainerStyle={{ padding: 10 }}
+            />
+          </View>
+        </Menu>
+      </View>
+
+      <View style={{ flexDirection: "row" }}>
+        <IconButton icon={searchIcon} onPress={() => {}} />
+        <Menu
+          visible={fontMenuVisible}
+          onDismiss={closeFontMenu}
+          anchor={<IconButton icon={moreVertIcon} onPress={openFontMenu} />}
+          style={{ marginTop: 56 }}
+          contentStyle={{
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+            padding: 12,
+            minWidth: 240,
+          }}
+        >
+          <View style={{ gap: 16 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                alignItems: "center",
+              }}
+            >
+              <IconButton
+                icon={MaterialIcon("wb-sunny")}
+                onPress={() => {
+                  if (isDarkTheme) toggleTheme();
+                }}
+                selected={!isDarkTheme}
+                size={28}
+                accessibilityLabel="Light mode"
+              />
+              <IconButton
+                icon={MaterialIcon("dark-mode")}
+                onPress={() => {
+                  if (!isDarkTheme) toggleTheme();
+                }}
+                selected={isDarkTheme}
+                size={28}
+                accessibilityLabel="Dark mode"
+              />
+              <IconButton
+                icon={MaterialIcon("settings")}
+                onPress={() => {
+                  /* TODO: implement system theme if available */
+                }}
+                size={28}
+                disabled
+                accessibilityLabel="System theme (not implemented)"
+              />
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                alignItems: "center",
+              }}
+            >
+              <IconButton
+                icon={textDecreaseIcon}
+                onPress={decreaseFontSize}
+                size={28}
+                accessibilityLabel="Decrease font size"
+              />
+              <Text style={{ fontSize: 16, alignSelf: "center" }}>
+                Font size
+              </Text>
+              <IconButton
+                icon={textIncreaseIcon}
+                onPress={increaseFontSize}
+                size={28}
+                accessibilityLabel="Increase font size"
+              />
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                alignItems: "center",
+              }}
+            >
+              <IconButton
+                icon={unfoldLessIcon}
+                onPress={decreaseLineHeight}
+                size={28}
+                accessibilityLabel="Decrease line height"
+              />
+              <Text style={{ fontSize: 16, alignSelf: "center" }}>
+                Line height
+              </Text>
+              <IconButton
+                icon={unfoldMoreIcon}
+                onPress={increaseLineHeight}
+                size={28}
+                accessibilityLabel="Increase line height"
+              />
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                alignItems: "center",
+              }}
+            >
+              <IconButton
+                icon={unfoldLessIcon}
+                onPress={decreaseMargin}
+                size={28}
+                accessibilityLabel="Decrease margin"
+              />
+              <Text style={{ fontSize: 16, alignSelf: "center" }}>
+                Margin
+                <Text style={{ fontWeight: "bold" }}> {marginSize}px</Text>
+              </Text>
+              <IconButton
+                icon={unfoldMoreIcon}
+                onPress={increaseMargin}
+                size={28}
+                accessibilityLabel="Increase margin"
+              />
+            </View>
+          </View>
+        </Menu>
+        <IconButton icon="history" onPress={openHistoryView} />
+      </View>
+    </View>
+  );
+}

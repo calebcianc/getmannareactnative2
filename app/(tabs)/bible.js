@@ -12,26 +12,26 @@ import {
   View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { FAB, IconButton, Paragraph, Text, TextInput, useTheme } from "react-native-paper";
-import Animated, {
+import { FAB, Paragraph, Text, useTheme } from "react-native-paper";
+import {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import ColorPicker from "../components/ColorPicker";
 // import ExpoundBottomSheet from "../components/ExpoundBottomSheet";
+import { SelectionBar } from "../../components/SelectionBar";
 import { useBottomSheet } from "../_layout";
 import { useBible } from "../context/BibleProvider";
 
 const HIGHLIGHT_COLORS = {
-  yellow: '#FFD700',
-  blue: '#87CEEB',
-  green: '#90EE90',
-  pink: '#FFB6C1',
-  orange: '#FFA500',
-  purple: '#DDA0DD',
+  yellow: "#FFD700",
+  blue: "#87CEEB",
+  green: "#90EE90",
+  pink: "#FFB6C1",
+  orange: "#FFA500",
+  purple: "#DDA0DD",
 };
 
 const toSuperscript = (str) => {
@@ -110,86 +110,6 @@ const getStyles = (theme, marginSize = 20) =>
       elevation: 0,
       backgroundColor: theme.colors.surfaceVariant,
     },
-    selectionOptionsBar: {
-      position: "absolute",
-      bottom: 15,
-      left: 15,
-      right: 15,
-      paddingBottom: 12,
-      paddingTop: 24,
-      borderRadius: 28,
-      backgroundColor: theme.colors.surfaceVariant,
-      elevation: 4,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.outline,
-    },
-    pullDownHandle: {
-      width: 40,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: theme.colors.onSurfaceVariant,
-      alignSelf: "center",
-      position: "absolute",
-      top: 10,
-    },
-    actionsScrollView: {
-      paddingHorizontal: 8,
-      marginTop: 12,
-    },
-    actionButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderRadius: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      marginHorizontal: 4,
-    },
-    actionButtonText: {
-      marginLeft: 8,
-      fontWeight: "bold",
-      color: theme.colors.onSurface,
-    },
-    expoundButtonContainer: {
-      marginHorizontal: 12,
-      width: '95%',
-      alignSelf: 'center',
-      justifyContent: 'center',
-      alignItems: 'center',
-      display: 'flex',
-    },
-    expoundButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: theme.colors.surface,
-      borderRadius: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      width: '100%',
-      height: '100%',
-    },
-    expoundButtonText: {
-      marginLeft: 8,
-      fontSize: 18,
-      fontWeight: "bold",
-      color: theme.colors.onSurface,
-      flexShrink: 1,
-    },
-    highlightButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: theme.colors.primary,
-      borderRadius: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      marginHorizontal: 4,
-    },
-    highlightButtonText: {
-      marginLeft: 8,
-      fontWeight: "bold",
-      color: theme.colors.onPrimary,
-    },
     chaptersContainer: {
       paddingVertical: 10,
     },
@@ -216,7 +136,7 @@ const getStyles = (theme, marginSize = 20) =>
     },
   });
 
-const NOTES_LIST_MAX_HEIGHT = Dimensions.get('window').height * 0.4;
+const NOTES_LIST_MAX_HEIGHT = Dimensions.get("window").height * 0.4;
 const NOTE_LINE_HEIGHT = 20;
 const NOTE_MAX_HEIGHT = NOTE_LINE_HEIGHT * 5;
 
@@ -340,8 +260,10 @@ const BibleScreen = () => {
       setKeyboardHeight(0);
       animatedKeyboardHeight.value = withTiming(0, { duration: 250 });
     };
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
     const showSub = Keyboard.addListener(showEvent, onKeyboardShow);
     const hideSub = Keyboard.addListener(hideEvent, onKeyboardHide);
     return () => {
@@ -437,18 +359,18 @@ const BibleScreen = () => {
   // Highlight functions
   const handleColorSelect = async (color) => {
     if (!selectedVerses.length) return;
-    
+
     // Batch update highlights for all selected verses
-    const verseKeys = selectedVerses.map(verse => 
+    const verseKeys = selectedVerses.map((verse) =>
       getVerseKey(selectedBook.bookid, selectedChapter, verse.verse)
     );
-    
+
     // Create a new highlights object
     const newHighlights = { ...highlights };
-    verseKeys.forEach(verseKey => {
+    verseKeys.forEach((verseKey) => {
       newHighlights[verseKey] = color;
     });
-    
+
     // Update state and AsyncStorage once
     await addHighlightBatch(newHighlights);
     setSelectedHighlightColor(color);
@@ -460,11 +382,11 @@ const BibleScreen = () => {
 
   const handleRemoveHighlight = async () => {
     if (!selectedVerses.length) return;
-    
-    const verseKeys = selectedVerses.map(verse => 
+
+    const verseKeys = selectedVerses.map((verse) =>
       getVerseKey(selectedBook.bookid, selectedChapter, verse.verse)
     );
-    
+
     // Batch remove highlight from all selected verses
     await removeHighlightBatch(verseKeys);
     setIsHighlightMode(false);
@@ -472,16 +394,22 @@ const BibleScreen = () => {
   };
 
   const getVerseHighlight = (verse) => {
-    const verseKey = getVerseKey(selectedBook.bookid, selectedChapter, verse.verse);
+    const verseKey = getVerseKey(
+      selectedBook.bookid,
+      selectedChapter,
+      verse.verse
+    );
     return getHighlight(verseKey);
   };
 
   const hasExistingHighlight = () => {
-    return selectedVerses.some(verse => getVerseHighlight(verse));
+    return selectedVerses.some((verse) => getVerseHighlight(verse));
   };
 
   const getExistingHighlightColor = () => {
-    const highlightedVerse = selectedVerses.find(verse => getVerseHighlight(verse));
+    const highlightedVerse = selectedVerses.find((verse) =>
+      getVerseHighlight(verse)
+    );
     return highlightedVerse ? getVerseHighlight(highlightedVerse) : null;
   };
 
@@ -556,7 +484,9 @@ const BibleScreen = () => {
       setEditingNote(null);
       return;
     }
-    const verseKeys = selectedVerses.map(verse => getVerseKey(selectedBook.bookid, selectedChapter, verse.verse));
+    const verseKeys = selectedVerses.map((verse) =>
+      getVerseKey(selectedBook.bookid, selectedChapter, verse.verse)
+    );
     await addNotes(verseKeys, noteText.trim());
     setIsNotesMode(false);
     setNoteText("");
@@ -567,11 +497,17 @@ const BibleScreen = () => {
   const formatNoteDate = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
-    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    return d.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
 
   // Get notes for selected verses
-  const selectedVerseKeys = selectedVerses.map(verse => getVerseKey(selectedBook.bookid, selectedChapter, verse.verse));
+  const selectedVerseKeys = selectedVerses.map((verse) =>
+    getVerseKey(selectedBook.bookid, selectedChapter, verse.verse)
+  );
   const notesForSelected = getNotesForVerses(selectedVerseKeys);
 
   const firstRowActions = [
@@ -581,15 +517,36 @@ const BibleScreen = () => {
       onPress: toggleHighlightMode,
       isSelected: isHighlightMode,
     },
-    { label: "Notes", icon: "edit-note", onPress: handleNotesPress, isSelected: isNotesMode },
-    { label: "Copy", icon: "content-copy", onPress: handleCopyPress, isSelected: false },
-    { label: "Share", icon: "share", onPress: handleSharePress, isSelected: false },
-    { label: "Bookmark", icon: "bookmark-border", onPress: handleBookmarkPress, isSelected: false },
+    {
+      label: "Notes",
+      icon: "edit-note",
+      onPress: handleNotesPress,
+      isSelected: isNotesMode,
+    },
+    {
+      label: "Copy",
+      icon: "content-copy",
+      onPress: handleCopyPress,
+      isSelected: false,
+    },
+    {
+      label: "Share",
+      icon: "share",
+      onPress: handleSharePress,
+      isSelected: false,
+    },
+    {
+      label: "Bookmark",
+      icon: "bookmark-border",
+      onPress: handleBookmarkPress,
+      isSelected: false,
+    },
   ];
 
   // Animated style for expound container
   const keyboardAvoidingStyle = useAnimatedStyle(() => ({
-    bottom: animatedKeyboardHeight.value > 0 ? animatedKeyboardHeight.value - 90 : 15,
+    bottom:
+      animatedKeyboardHeight.value > 0 ? animatedKeyboardHeight.value - 90 : 15,
   }));
 
   const handleExpoundPress = () => {
@@ -623,19 +580,23 @@ const BibleScreen = () => {
                   (v) => v.verse === verse.verse
                 );
                 const highlightColor = getVerseHighlight(verse);
-                const verseKey = getVerseKey(selectedBook.bookid, selectedChapter, verse.verse);
+                const verseKey = getVerseKey(
+                  selectedBook.bookid,
+                  selectedChapter,
+                  verse.verse
+                );
                 const hasNote = !!notes[verseKey] && !!notes[verseKey].text;
 
                 return (
-                  <Text key={`${selectedBook.bookid}-${selectedChapter}-${verse.verse}`}>
+                  <Text
+                    key={`${selectedBook.bookid}-${selectedChapter}-${verse.verse}`}
+                  >
                     {index > 0 && " "}
                     <Pressable
                       onPress={() => handleVersePress(verse)}
                       delayPressIn={100}
                       android_disableSound={true}
-                      style={({ pressed }) => [
-                        pressed && { opacity: 0.7 },
-                      ]}
+                      style={({ pressed }) => [pressed && { opacity: 0.7 }]}
                     >
                       <Text
                         style={[
@@ -650,7 +611,11 @@ const BibleScreen = () => {
                         <Text style={styles.verseNumber}>
                           {toSuperscript(verse.verse)}{" "}
                           {hasNote && (
-                            <MaterialIcons name="edit-note" size={14} color={theme.colors.primary} />
+                            <MaterialIcons
+                              name="edit-note"
+                              size={14}
+                              color={theme.colors.primary}
+                            />
                           )}
                         </Text>
                         {decode(verse.text.replace(/<[^>]+>/g, ""))}
@@ -663,123 +628,32 @@ const BibleScreen = () => {
           </ScrollView>
         </GestureDetector>
       )}
-      {selectedVerses.length > 0 ? (
-        <GestureDetector gesture={panGesture}>
-          <Animated.View style={[styles.selectionOptionsBar, animatedStyle, keyboardAvoidingStyle]}>
-            <View style={styles.pullDownHandle} />
-
-            <View
-              style={[
-                styles.expoundButtonContainer,
-                !isNotesMode && { minHeight: 64, height: 64 },
-              ]}
-            >
-              {isHighlightMode ? (
-                <ColorPicker
-                  onColorSelect={handleColorSelect}
-                  onRemoveHighlight={handleRemoveHighlight}
-                  selectedColor={selectedHighlightColor}
-                  hasExistingHighlight={hasExistingHighlight()}
-                  existingColor={getExistingHighlightColor()}
-                />
-              ) : isNotesMode ? (
-                <View style={{ width: '100%' }}>
-                  {notesForSelected.length > 0 && (
-                    <ScrollView style={{ marginBottom: 8, maxHeight: NOTES_LIST_MAX_HEIGHT }}>
-                      {notesForSelected.map((note, idx) => (
-                        <View key={idx} style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: 10, padding: 10, marginBottom: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <View style={{ flex: 1 }}>
-                            <ScrollView style={{ maxHeight: NOTE_MAX_HEIGHT }}>
-                              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 15, lineHeight: NOTE_LINE_HEIGHT }} numberOfLines={5}>
-                                {note.text}
-                              </Text>
-                            </ScrollView>
-                            <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 12, marginTop: 2, opacity: 0.7 }}>{formatNoteDate(note.date)}</Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', marginLeft: 8 }}>
-                            <IconButton icon="pencil" size={18} onPress={() => handleEditNote(note)} />
-                            <IconButton icon="delete" size={18} onPress={() => handleDeleteNote(note)} />
-                          </View>
-                        </View>
-                      ))}
-                    </ScrollView>
-                  )}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-                    <TextInput
-                      ref={noteInputRef}
-                      value={noteText}
-                      onChangeText={setNoteText}
-                      placeholder="Write a note..."
-                      style={{ flex: 1, backgroundColor: 'transparent' }}
-                      autoFocus
-                      underlineColor="transparent"
-                      activeUnderlineColor="transparent"
-                    />
-                    {noteText.length > 0 ? (
-                      <>
-                        <IconButton icon="close" onPress={handleCloseNotes} />
-                        <IconButton icon="check" onPress={handleSaveNote} />
-                      </>
-                    ) : (
-                      <IconButton icon="close" onPress={handleCloseNotes} />
-                    )}
-                  </View>
-                </View>
-              ) : (
-                <Pressable style={styles.expoundButton} onPress={handleExpoundPress}>
-                  <MaterialIcons
-                    name="manage-search"
-                    size={24}
-                    color={theme.colors.onSurface}
-                  />
-                  <Text
-                    style={styles.expoundButtonText}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {expoundText}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.actionsScrollView}
-            >
-              {firstRowActions.map((action) => (
-                <Pressable
-                  key={action.label}
-                  style={[
-                    styles.actionButton,
-                    action.isSelected && styles.highlightButton,
-                  ]}
-                  onPress={action.onPress}
-                >
-                  <MaterialIcons
-                    name={action.icon}
-                    size={20}
-                    color={
-                      action.isSelected
-                        ? theme.colors.onPrimary
-                        : theme.colors.onSurface
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.actionButtonText,
-                      action.isSelected && styles.highlightButtonText,
-                    ]}
-                  >
-                    {action.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </GestureDetector>
-      ) : (
+      {selectedVerses.length > 0 && (
+        <SelectionBar
+          animatedStyle={animatedStyle}
+          keyboardAvoidingStyle={keyboardAvoidingStyle}
+          panGesture={panGesture}
+          isHighlightMode={isHighlightMode}
+          isNotesMode={isNotesMode}
+          notesForSelected={notesForSelected}
+          formatNoteDate={formatNoteDate}
+          handleEditNote={handleEditNote}
+          handleDeleteNote={handleDeleteNote}
+          noteInputRef={noteInputRef}
+          noteText={noteText}
+          setNoteText={setNoteText}
+          handleCloseNotes={handleCloseNotes}
+          handleSaveNote={handleSaveNote}
+          handleExpoundPress={handleExpoundPress}
+          expoundText={expoundText}
+          firstRowActions={firstRowActions}
+          handleColorSelect={handleColorSelect}
+          selectedHighlightColor={selectedHighlightColor}
+          hasExistingHighlight={hasExistingHighlight}
+          getExistingHighlightColor={getExistingHighlightColor}
+        />
+      )}
+      {selectedVerses.length === 0 && (
         <>
           <FAB
             icon="arrow-left"

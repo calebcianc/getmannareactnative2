@@ -18,8 +18,8 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import SkeletonLoader from "../../components/SkeletonLoader";
-import { expoundVerse } from "../../utils/gemini";
+import { expoundVerse } from "../utils/gemini";
+import SkeletonLoader from "./SkeletonLoader";
 
 const GorhomBottomSheet = ({
   visible,
@@ -259,6 +259,7 @@ const GorhomBottomSheet = ({
           }
         }}
         enablePanDownToClose
+        enableDynamicSizing={false}
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
         handleIndicatorStyle={{
           backgroundColor: theme.colors.onSurfaceVariant,
@@ -298,7 +299,7 @@ const GorhomBottomSheet = ({
               style={styles.headerIcon}
             />
           </View>
-          <View style={[styles.contentContainerWithPadding, { flex: 1 }]}>
+          <View style={styles.contentContainer}>
             {viewMode === "chat" ? (
               <BottomSheetFlatList
                 data={conversation}
@@ -335,7 +336,6 @@ const GorhomBottomSheet = ({
                     </View>
                   ) : null
                 }
-                style={{ flex: 1 }}
                 contentContainerStyle={{
                   paddingHorizontal: 8,
                   paddingBottom: 16,
@@ -346,7 +346,6 @@ const GorhomBottomSheet = ({
                 data={chatHistory}
                 renderItem={renderHistoryItem}
                 keyExtractor={(item) => item.id.toString()}
-                style={{ flex: 1 }}
                 contentContainerStyle={{
                   paddingHorizontal: 8,
                   paddingBottom: 16,
@@ -380,11 +379,7 @@ const GorhomBottomSheet = ({
 const getStyles = (theme, insets) =>
   StyleSheet.create({
     contentContainer: {
-      padding: 16,
-    },
-    contentContainerWithPadding: {
       flex: 1,
-      paddingHorizontal: 8,
     },
     header: {
       flexDirection: "row",
