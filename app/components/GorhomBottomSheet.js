@@ -1,21 +1,23 @@
-import BottomSheet, { BottomSheetFlatList, BottomSheetTextInput } from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetFlatList,
+  BottomSheetTextInput,
+} from "@gorhom/bottom-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "html-entities";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { Animated, Pressable, StyleSheet, View } from "react-native";
 import MarkdownDisplay from "react-native-markdown-display";
+import { IconButton, Text, useTheme } from "react-native-paper";
 import {
-    IconButton,
-    Text,
-    useTheme
-} from "react-native-paper";
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { expoundVerse } from "../../utils/gemini";
 import SkeletonLoader from "./SkeletonLoader";
 
@@ -42,7 +44,7 @@ const GorhomBottomSheet = ({
   const [inputValue, setInputValue] = useState("");
   const [overlayOpacity] = useState(new Animated.Value(0));
 
-  const snapPoints = useMemo(() => ["80%"], []);
+  const snapPoints = useMemo(() => ["85%"], []);
 
   useEffect(() => {
     if (visible) {
@@ -228,11 +230,11 @@ const GorhomBottomSheet = ({
     <>
       {/* Scrim overlay */}
       <Animated.View
-        pointerEvents={visible ? 'auto' : 'none'}
+        pointerEvents={visible ? "auto" : "none"}
         style={[
           StyleSheet.absoluteFill,
           {
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: "rgba(0,0,0,0.5)",
             opacity: overlayOpacity,
           },
         ]}
@@ -250,11 +252,16 @@ const GorhomBottomSheet = ({
         }}
         enablePanDownToClose
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
-        handleIndicatorStyle={{ backgroundColor: theme.colors.onSurfaceVariant }}
+        handleIndicatorStyle={{
+          backgroundColor: theme.colors.onSurfaceVariant,
+        }}
         style={[styles.sheetContainer, { zIndex: 1001 }]}
         keyboardBehavior="interactive"
       >
-        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: theme.colors.surface }}>
+        <SafeAreaView
+          edges={["bottom"]}
+          style={{ flex: 1, backgroundColor: theme.colors.surface }}
+        >
           <View style={[styles.header, { paddingHorizontal: 16 }]}>
             {viewMode === "chat" ? (
               <IconButton
@@ -295,8 +302,8 @@ const GorhomBottomSheet = ({
                             styles.userMessageContainer,
                             {
                               backgroundColor: theme.dark
-                                ? 'rgba(255,255,255,0.08)'
-                                : '#F3F3F3',
+                                ? "rgba(255,255,255,0.08)"
+                                : "#F3F3F3",
                             },
                           ]
                         : styles.modelMessageContainer,
@@ -318,18 +325,24 @@ const GorhomBottomSheet = ({
                     </View>
                   ) : null
                 }
-                contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
+                contentContainerStyle={{
+                  paddingHorizontal: 8,
+                  paddingBottom: 16,
+                }}
               />
             ) : (
               <BottomSheetFlatList
                 data={chatHistory}
                 renderItem={renderHistoryItem}
                 keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
+                contentContainerStyle={{
+                  paddingHorizontal: 8,
+                  paddingBottom: 16,
+                }}
               />
             )}
           </View>
-          <View style={[styles.inputContainer, { marginHorizontal: 8 }]}> 
+          <View style={[styles.inputContainer, { marginHorizontal: 8 }]}>
             <BottomSheetTextInput
               style={styles.textInput}
               value={inputValue}
@@ -430,11 +443,11 @@ const getStyles = (theme, insets) =>
       fontSize: 16,
       paddingVertical: 10,
       paddingHorizontal: 16,
-      backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : '#F3F3F3',
+      backgroundColor: theme.dark ? "rgba(255,255,255,0.08)" : "#F3F3F3",
       borderRadius: 24,
       marginRight: 8,
       borderWidth: 0,
-      shadowColor: '#000',
+      shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.04,
       shadowRadius: 2,
@@ -443,9 +456,9 @@ const getStyles = (theme, insets) =>
     sheetContainer: {
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
-      overflow: 'hidden',
+      overflow: "hidden",
       // iOS shadow
-      shadowColor: '#000',
+      shadowColor: "#000",
       shadowOffset: { width: 0, height: -4 },
       shadowOpacity: 0.18,
       shadowRadius: 12,
