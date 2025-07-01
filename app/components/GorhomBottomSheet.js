@@ -9,11 +9,13 @@ import React, {
     useState,
 } from "react";
 import { Animated, Pressable, StyleSheet, View } from "react-native";
+import MarkdownDisplay from "react-native-markdown-display";
 import {
     IconButton,
     Text,
     useTheme
 } from "react-native-paper";
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { expoundVerse } from "../../utils/gemini";
 import SkeletonLoader from "./SkeletonLoader";
 
@@ -26,7 +28,8 @@ const GorhomBottomSheet = ({
   openInHistoryView,
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const insets = useSafeAreaInsets();
+  const styles = getStyles(theme, insets);
   const bottomSheetRef = useRef(null);
 
   const [conversation, setConversation] = useState([]);
@@ -39,7 +42,7 @@ const GorhomBottomSheet = ({
   const [inputValue, setInputValue] = useState("");
   const [overlayOpacity] = useState(new Animated.Value(0));
 
-  const snapPoints = useMemo(() => ["70%"], []);
+  const snapPoints = useMemo(() => ["80%"], []);
 
   useEffect(() => {
     if (visible) {
@@ -209,6 +212,14 @@ const GorhomBottomSheet = ({
     handleResponse(updatedConversation);
   };
 
+  // Only reset isNewChat, viewMode, and currentChatId when selection changes
+  useEffect(() => {
+    setIsNewChat(true);
+    setViewMode("chat");
+    setCurrentChatId(null);
+    // Do NOT clear conversation or activeVerseRef here
+  }, [selectedVerses, book, chapter]);
+
   if (!visible) {
     return null;
   }
@@ -241,106 +252,114 @@ const GorhomBottomSheet = ({
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
         handleIndicatorStyle={{ backgroundColor: theme.colors.onSurfaceVariant }}
         style={[styles.sheetContainer, { zIndex: 1001 }]}
+        keyboardBehavior="interactive"
       >
-        <View style={[styles.header, { paddingHorizontal: 16 }]}>
-          {viewMode === "chat" ? (
+        <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: theme.colors.surface }}>
+          <View style={[styles.header, { paddingHorizontal: 16 }]}>
+            {viewMode === "chat" ? (
+              <IconButton
+                icon="history"
+                size={24}
+                onPress={() => setViewMode("history")}
+                style={styles.headerIcon}
+              />
+            ) : (
+              <IconButton
+                icon="arrow-left"
+                size={24}
+                onPress={() => setViewMode("chat")}
+                style={styles.headerIcon}
+              />
+            )}
+            <Text style={styles.title} numberOfLines={1}>
+              {viewMode === "chat" ? title : "Chat History"}
+            </Text>
             <IconButton
-              icon="history"
+              icon="close"
               size={24}
-              onPress={() => setViewMode("history")}
+              onPress={onDismiss}
               style={styles.headerIcon}
             />
-          ) : (
-            <IconButton
-              icon="arrow-left"
-              size={24}
-              onPress={() => setViewMode("chat")}
-              style={styles.headerIcon}
-            />
-          )}
-          <Text style={styles.title} numberOfLines={1}>
-            {viewMode === "chat" ? title : "Chat History"}
-          </Text>
-          <IconButton
-            icon="close"
-            size={24}
-            onPress={onDismiss}
-            style={styles.headerIcon}
-          />
-        </View>
-        <View style={styles.contentContainerWithPadding}>
-          {viewMode === "chat" ? (
-            <BottomSheetFlatList
-              data={conversation}
-              keyExtractor={(_, index) => index.toString()}
-              renderItem={({ item }) => (
-                <View
-                  style={[
-                    styles.messageContainer,
-                    item.role === "user"
-                      ? styles.userMessageContainer
-                      : styles.modelMessageContainer,
-                  ]}
-                >
-                  <Text
-                    style={
+          </View>
+          <View style={styles.contentContainerWithPadding}>
+            {viewMode === "chat" ? (
+              <BottomSheetFlatList
+                data={conversation}
+                keyExtractor={(_, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <View
+                    style={[
+                      styles.messageContainer,
                       item.role === "user"
-                        ? styles.userMessageText
-                        : styles.responseText
-                    }
+                        ? [
+                            styles.userMessageContainer,
+                            {
+                              backgroundColor: theme.dark
+                                ? 'rgba(255,255,255,0.08)'
+                                : '#F3F3F3',
+                            },
+                          ]
+                        : styles.modelMessageContainer,
+                    ]}
                   >
-                    {item.content}
-                  </Text>
-                </View>
-              )}
-              ListFooterComponent={
-                isStreaming ? (
-                  <View style={{ marginVertical: 10 }}>
-                    <SkeletonLoader count={3} />
+                    {item.role === "user" ? (
+                      <Text style={styles.userMessageText}>{item.content}</Text>
+                    ) : (
+                      <MarkdownDisplay style={{ body: styles.responseText }}>
+                        {item.content}
+                      </MarkdownDisplay>
+                    )}
                   </View>
-                ) : null
-              }
-              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+                )}
+                ListFooterComponent={
+                  isStreaming ? (
+                    <View style={{ marginVertical: 10 }}>
+                      <SkeletonLoader count={3} />
+                    </View>
+                  ) : null
+                }
+                contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
+              />
+            ) : (
+              <BottomSheetFlatList
+                data={chatHistory}
+                renderItem={renderHistoryItem}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 16 }}
+              />
+            )}
+          </View>
+          <View style={[styles.inputContainer, { marginHorizontal: 8 }]}> 
+            <BottomSheetTextInput
+              style={styles.textInput}
+              value={inputValue}
+              onChangeText={setInputValue}
+              placeholder="Type your message..."
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+              editable={!isStreaming}
             />
-          ) : (
-            <BottomSheetFlatList
-              data={chatHistory}
-              renderItem={renderHistoryItem}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+            <IconButton
+              icon="send"
+              size={24}
+              onPress={handleSend}
+              disabled={!inputValue.trim() || isStreaming}
             />
-          )}
-        </View>
-        <View style={[styles.inputContainer, { marginBottom: 24, marginHorizontal: 16 }]}> 
-          <BottomSheetTextInput
-            style={styles.textInput}
-            value={inputValue}
-            onChangeText={setInputValue}
-            placeholder="Type your message..."
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-            editable={!isStreaming}
-          />
-          <IconButton
-            icon="send"
-            size={24}
-            onPress={handleSend}
-            disabled={!inputValue.trim() || isStreaming}
-          />
-        </View>
+          </View>
+        </SafeAreaView>
       </BottomSheet>
     </>
   );
 };
 
-const getStyles = (theme) =>
+const getStyles = (theme, insets) =>
   StyleSheet.create({
     contentContainer: {
       padding: 16,
     },
     contentContainerWithPadding: {
       flex: 1,
-      paddingHorizontal: 16,
+      paddingHorizontal: 8,
     },
     header: {
       flexDirection: "row",
@@ -364,7 +383,7 @@ const getStyles = (theme) =>
       marginBottom: 12,
     },
     userMessageContainer: {
-      backgroundColor: theme.colors.surfaceVariant,
+      backgroundColor: theme.colors.surface,
       alignSelf: "flex-end",
       padding: 12,
       borderRadius: 12,
@@ -409,10 +428,17 @@ const getStyles = (theme) =>
     textInput: {
       flex: 1,
       fontSize: 16,
-      padding: 8,
-      backgroundColor: theme.colors.background,
-      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : '#F3F3F3',
+      borderRadius: 24,
       marginRight: 8,
+      borderWidth: 0,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.04,
+      shadowRadius: 2,
+      elevation: 1,
     },
     sheetContainer: {
       borderTopLeftRadius: 24,

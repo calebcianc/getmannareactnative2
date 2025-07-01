@@ -80,12 +80,12 @@ const getStyles = (theme, marginSize = 20) =>
     },
     selectedVerse: {
       backgroundColor: theme.dark
-        ? "rgba(255, 255, 255, 0.12)"
-        : "rgba(0, 0, 0, 0.08)",
-      borderRadius: 6,
-      textDecorationLine: "underline",
-      textDecorationStyle: "dotted",
-      textDecorationColor: theme.colors.onSurface,
+        ? "rgba(255,255,255,0.10)"
+        : "rgba(0,0,0,0.06)",
+      borderRadius: 4,
+      paddingVertical: 1,
+      paddingHorizontal: 2,
+      marginVertical: 0,
     },
     highlightedVerse: {
       borderRadius: 6,
@@ -627,25 +627,35 @@ const BibleScreen = () => {
                 const hasNote = !!notes[verseKey] && !!notes[verseKey].text;
 
                 return (
-                  <Text
-                    key={verse.verse}
-                    style={[
-                      isSelected ? styles.selectedVerse : {},
-                      highlightColor && {
-                        ...styles.highlightedVerse,
-                        backgroundColor: HIGHLIGHT_COLORS[highlightColor],
-                      },
-                    ]}
-                    onPress={() => handleVersePress(verse)}
-                  >
+                  <Text key={`${selectedBook.bookid}-${selectedChapter}-${verse.verse}`}>
                     {index > 0 && " "}
-                    <Text style={styles.verseNumber}>
-                      {toSuperscript(verse.verse)}{" "}
-                      {hasNote && (
-                        <MaterialIcons name="edit-note" size={14} color={theme.colors.primary} />
-                      )}
-                    </Text>
-                    {decode(verse.text.replace(/<[^>]+>/g, ""))}
+                    <Pressable
+                      onPress={() => handleVersePress(verse)}
+                      delayPressIn={100}
+                      android_disableSound={true}
+                      style={({ pressed }) => [
+                        pressed && { opacity: 0.7 },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          { fontSize, lineHeight, fontFamily },
+                          isSelected ? styles.selectedVerse : {},
+                          highlightColor && {
+                            ...styles.highlightedVerse,
+                            backgroundColor: HIGHLIGHT_COLORS[highlightColor],
+                          },
+                        ]}
+                      >
+                        <Text style={styles.verseNumber}>
+                          {toSuperscript(verse.verse)}{" "}
+                          {hasNote && (
+                            <MaterialIcons name="edit-note" size={14} color={theme.colors.primary} />
+                          )}
+                        </Text>
+                        {decode(verse.text.replace(/<[^>]+>/g, ""))}
+                      </Text>
+                    </Pressable>
                   </Text>
                 );
               })}
