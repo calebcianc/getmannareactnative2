@@ -20,10 +20,7 @@ import {
 } from "react-native";
 import MarkdownDisplay from "react-native-markdown-display";
 import { IconButton, Text, useTheme } from "react-native-paper";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { expoundVerse } from "../utils/gemini";
 import SkeletonLoader from "./SkeletonLoader";
 
@@ -53,7 +50,7 @@ const GorhomBottomSheet = ({
   const [inputValue, setInputValue] = useState("");
   const [overlayOpacity] = useState(new Animated.Value(0));
 
-  const snapPoints = useMemo(() => ["85%"], []);
+  const snapPoints = useMemo(() => ["90%"], []);
 
   useEffect(() => {
     if (!visible) {
@@ -195,23 +192,83 @@ const GorhomBottomSheet = ({
     }
   };
 
-  const handleSelectChat = (chat) => {
+  const handleSelectChat = useCallback((chat) => {
     setConversation(chat.conversation);
     setActiveVerseRef(chat.verseRef);
     setCurrentChatId(chat.id);
     setIsNewChat(false);
     setUserOverriddenViewMode("chat");
-  };
+  }, []);
 
-  const renderHistoryItem = ({ item }) => (
-    <Pressable
-      onPress={() => handleSelectChat(item)}
-      style={styles.historyItem}
-    >
-      <View style={styles.historyItemContent}>
-        <Text style={styles.historyItemTitle}>{item.verseRef}</Text>
+  const handleDelete = useCallback(
+    async (id) => {
+      const updatedHistory = chatHistory.filter((chat) => chat.id !== id);
+      setChatHistory(updatedHistory);
+      try {
+        await AsyncStorage.setItem(
+          "chatHistory",
+          JSON.stringify(updatedHistory)
+        );
+      } catch (e) {
+        console.error("Failed to delete chat.", e);
+      }
+    },
+    [chatHistory]
+  );
+
+  const renderHistoryItem = useCallback(
+    ({ item }) => {
+      // find first model response
+      const aiResponse =
+        item.conversation.find((msg) => msg.role === "model")?.content || "";
+      const dateString = new Date(item.timestamp).toLocaleDateString();
+      return (
+        <View style={[styles.historyItemRow, styles.historyItem]}>
+          <Pressable onPress={() => handleSelectChat(item)} style={{ flex: 1 }}>
+            <Text style={styles.historyItemTitle}>{item.verseRef}</Text>
+            <Text style={styles.historyItemSubtitle} numberOfLines={1}>
+              {aiResponse}
+            </Text>
+            <Text style={styles.historyItemDate}>{dateString}</Text>
+          </Pressable>
+          <IconButton
+            icon="delete"
+            size={20}
+            onPress={() => handleDelete(item.id)}
+          />
+        </View>
+      );
+    },
+    [handleSelectChat, handleDelete, styles]
+  );
+
+  const renderChatItem = useCallback(
+    ({ item }) => (
+      <View
+        style={[
+          styles.messageContainer,
+          item.role === "user"
+            ? [
+                styles.userMessageContainer,
+                {
+                  backgroundColor: theme.dark
+                    ? "rgba(255,255,255,0.08)"
+                    : "#F3F3F3",
+                },
+              ]
+            : styles.modelMessageContainer,
+        ]}
+      >
+        {item.role === "user" ? (
+          <Text style={styles.userMessageText}>{item.content}</Text>
+        ) : (
+          <MarkdownDisplay style={{ body: styles.responseText }}>
+            {item.content}
+          </MarkdownDisplay>
+        )}
       </View>
-    </Pressable>
+    ),
+    [theme, styles]
   );
 
   const handleSend = () => {
@@ -251,6 +308,7 @@ const GorhomBottomSheet = ({
           {
             backgroundColor: "rgba(0,0,0,0.5)",
             opacity: overlayOpacity,
+            marginBottom: insets.bottom,
           },
         ]}
       >
@@ -268,120 +326,95 @@ const GorhomBottomSheet = ({
         }}
         enablePanDownToClose
         enableDynamicSizing={false}
-        keyboardBehavior="interactive"
+        keyboardBehavior="extend"
         keyboardBlurBehavior="restore"
+        topInset={insets.top}
+        bottomInset={insets.bottom}
+        android_keyboardInputMode="adjustPan"
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
         handleIndicatorStyle={{
           backgroundColor: theme.colors.onSurfaceVariant,
         }}
-        style={[styles.sheetContainer, { zIndex: 1001 }]}
+        style={[
+          styles.sheetContainer,
+          {
+            zIndex: 1001,
+            flex: 1,
+            backgroundColor: theme.colors.surface,
+          },
+        ]}
+
         // enableOverDrag={false}
         // enableContentPanningGesture={false}
       >
-        <SafeAreaView
-          edges={["bottom"]}
-          style={{ flex: 1, backgroundColor: theme.colors.surface }}
-        >
-          <View style={[styles.header, { paddingHorizontal: 16 }]}>
-            {viewMode === "chat" ? (
-              <IconButton
-                icon="history"
-                size={24}
-                onPress={() => setUserOverriddenViewMode("history")}
-                style={styles.headerIcon}
-              />
-            ) : (
-              <IconButton
-                icon="arrow-left"
-                size={24}
-                onPress={() => setUserOverriddenViewMode("chat")}
-                style={styles.headerIcon}
-              />
-            )}
-            <Text style={styles.title} numberOfLines={1}>
-              {viewMode === "chat" ? title : "Chat History"}
-            </Text>
+        <View style={[styles.header, { paddingHorizontal: 16 }]}>
+          {viewMode === "chat" && (
             <IconButton
-              icon="close"
+              icon="history"
               size={24}
-              onPress={onDismiss}
+              onPress={() => setUserOverriddenViewMode("history")}
               style={styles.headerIcon}
             />
-          </View>
-          <View style={styles.contentContainer}>
-            {viewMode === "chat" ? (
-              <BottomSheetFlatList
-                data={conversation}
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({ item }) => (
-                  <View
-                    style={[
-                      styles.messageContainer,
-                      item.role === "user"
-                        ? [
-                            styles.userMessageContainer,
-                            {
-                              backgroundColor: theme.dark
-                                ? "rgba(255,255,255,0.08)"
-                                : "#F3F3F3",
-                            },
-                          ]
-                        : styles.modelMessageContainer,
-                    ]}
-                  >
-                    {item.role === "user" ? (
-                      <Text style={styles.userMessageText}>{item.content}</Text>
-                    ) : (
-                      <MarkdownDisplay style={{ body: styles.responseText }}>
-                        {item.content}
-                      </MarkdownDisplay>
-                    )}
-                  </View>
-                )}
-                ListFooterComponent={
-                  isStreaming ? (
-                    <View style={{ marginVertical: 10 }}>
-                      <SkeletonLoader count={3} />
-                    </View>
-                  ) : null
-                }
-                contentContainerStyle={{
-                  paddingHorizontal: 8,
-                  paddingBottom: 16,
-                }}
-              />
-            ) : (
-              <BottomSheetFlatList
-                data={chatHistory}
-                renderItem={renderHistoryItem}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{
-                  paddingHorizontal: 8,
-                  paddingBottom: 16,
-                }}
-              />
-            )}
-          </View>
-          {viewMode === "chat" && (
-            <View style={[styles.inputContainer, { marginHorizontal: 8 }]}>
-              <BottomSheetTextInput
-                style={styles.textInput}
-                value={inputValue}
-                onChangeText={setInputValue}
-                placeholder="Type your message..."
-                onSubmitEditing={handleSend}
-                returnKeyType="send"
-                editable={!isStreaming}
-              />
-              <IconButton
-                icon="send"
-                size={24}
-                onPress={handleSend}
-                disabled={!inputValue.trim() || isStreaming}
-              />
-            </View>
           )}
-        </SafeAreaView>
+          <Text style={styles.title} numberOfLines={1}>
+            {viewMode === "chat" ? title : "Chat History"}
+          </Text>
+          <IconButton
+            icon="close"
+            size={24}
+            onPress={onDismiss}
+            style={styles.headerIcon}
+          />
+        </View>
+        <View style={styles.contentContainer}>
+          {viewMode === "chat" ? (
+            <BottomSheetFlatList
+              data={conversation}
+              keyExtractor={(_, index) => index.toString()}
+              renderItem={renderChatItem}
+              ListFooterComponent={
+                isStreaming ? (
+                  <View style={{ marginVertical: 10 }}>
+                    <SkeletonLoader count={3} />
+                  </View>
+                ) : null
+              }
+              contentContainerStyle={{
+                paddingHorizontal: 8,
+                paddingBottom: 16,
+              }}
+            />
+          ) : (
+            <BottomSheetFlatList
+              data={chatHistory}
+              renderItem={renderHistoryItem}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={{
+                paddingHorizontal: 8,
+                paddingBottom: 16,
+              }}
+            />
+          )}
+        </View>
+        {viewMode === "chat" && (
+          <View style={[styles.inputContainer, { marginHorizontal: 8 }]}>
+            <BottomSheetTextInput
+              style={styles.textInput}
+              value={inputValue}
+              onChangeText={setInputValue}
+              placeholder="Type your message..."
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+              editable={!isStreaming}
+            />
+            <IconButton
+              icon="send"
+              size={24}
+              onPress={handleSend}
+              disabled={!inputValue.trim() || isStreaming}
+            />
+          </View>
+        )}
       </BottomSheet>
     </>
   );
@@ -437,6 +470,21 @@ const getStyles = (theme, insets) =>
       borderBottomColor: theme.colors.outline,
       backgroundColor: theme.colors.surface,
     },
+    historyItemRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    historyItemSubtitle: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+      marginTop: 4,
+    },
+    historyItemDate: {
+      fontSize: 12,
+      color: theme.colors.outline,
+      marginTop: 2,
+    },
     historyItemContent: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -452,7 +500,7 @@ const getStyles = (theme, insets) =>
       flexDirection: "row",
       alignItems: "center",
       padding: 8,
-      paddingBottom: 0,
+      // paddingBottom: 0,
       borderTopWidth: 1,
       borderTopColor: theme.colors.outline,
       backgroundColor: theme.colors.surface,

@@ -202,7 +202,6 @@ export function BibleHeader() {
             <Button
               onPress={openBookMenu}
               disabled={translationMenuVisible}
-              // mode="outlined"
               style={bookButtonStyle}
               labelStyle={buttonLabelStyle}
             >
@@ -273,8 +272,6 @@ export function BibleHeader() {
           anchor={
             <Button
               onPress={openTranslationMenu}
-              // disabled={bookMenuVisible}
-              // mode="outlined"
               style={translationButtonStyle}
               labelStyle={buttonLabelStyle}
             >
