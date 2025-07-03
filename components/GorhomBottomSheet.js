@@ -11,7 +11,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Animated, Pressable, StyleSheet, View } from "react-native";
+import {
+  Animated,
+  Dimensions,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import MarkdownDisplay from "react-native-markdown-display";
 import { IconButton, Text, useTheme } from "react-native-paper";
 import {
@@ -33,6 +39,7 @@ const GorhomBottomSheet = ({
   const insets = useSafeAreaInsets();
   const styles = getStyles(theme, insets);
   const bottomSheetRef = useRef(null);
+  const { height: windowHeight } = Dimensions.get("window");
 
   const [conversation, setConversation] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -253,6 +260,7 @@ const GorhomBottomSheet = ({
         ref={bottomSheetRef}
         index={visible ? 0 : -1}
         snapPoints={snapPoints}
+        containerHeight={windowHeight}
         onChange={(index) => {
           if (index === -1) {
             onDismiss();
@@ -260,12 +268,13 @@ const GorhomBottomSheet = ({
         }}
         enablePanDownToClose
         enableDynamicSizing={false}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
         handleIndicatorStyle={{
           backgroundColor: theme.colors.onSurfaceVariant,
         }}
         style={[styles.sheetContainer, { zIndex: 1001 }]}
-        // keyboardBehavior="interactive"
         // enableOverDrag={false}
         // enableContentPanningGesture={false}
       >
@@ -353,23 +362,25 @@ const GorhomBottomSheet = ({
               />
             )}
           </View>
-          <View style={[styles.inputContainer, { marginHorizontal: 8 }]}>
-            <BottomSheetTextInput
-              style={styles.textInput}
-              value={inputValue}
-              onChangeText={setInputValue}
-              placeholder="Type your message..."
-              onSubmitEditing={handleSend}
-              returnKeyType="send"
-              editable={!isStreaming}
-            />
-            <IconButton
-              icon="send"
-              size={24}
-              onPress={handleSend}
-              disabled={!inputValue.trim() || isStreaming}
-            />
-          </View>
+          {viewMode === "chat" && (
+            <View style={[styles.inputContainer, { marginHorizontal: 8 }]}>
+              <BottomSheetTextInput
+                style={styles.textInput}
+                value={inputValue}
+                onChangeText={setInputValue}
+                placeholder="Type your message..."
+                onSubmitEditing={handleSend}
+                returnKeyType="send"
+                editable={!isStreaming}
+              />
+              <IconButton
+                icon="send"
+                size={24}
+                onPress={handleSend}
+                disabled={!inputValue.trim() || isStreaming}
+              />
+            </View>
+          )}
         </SafeAreaView>
       </BottomSheet>
     </>
