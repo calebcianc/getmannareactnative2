@@ -36,6 +36,7 @@ const GorhomBottomSheet = ({
   const insets = useSafeAreaInsets();
   const styles = getStyles(theme, insets);
   const bottomSheetRef = useRef(null);
+  const flatListRef = useRef(null);
   const { height: windowHeight } = Dimensions.get("window");
 
   const [conversation, setConversation] = useState([]);
@@ -288,6 +289,17 @@ const GorhomBottomSheet = ({
     // Do NOT clear conversation or activeVerseRef here
   }, [selectedVerses, book, chapter, openInHistoryView]);
 
+  // scroll to the latest message whenever conversation changes
+  useEffect(() => {
+    if (flatListRef.current && conversation.length > 0) {
+      flatListRef.current.scrollToIndex({
+        index: conversation.length - 1,
+        animated: true,
+        viewPosition: 0,
+      });
+    }
+  }, [conversation]);
+
   useEffect(() => {
     if (visible && viewMode === "history") {
       bottomSheetRef.current?.expand();
@@ -369,6 +381,7 @@ const GorhomBottomSheet = ({
         <View style={styles.contentContainer}>
           {viewMode === "chat" ? (
             <BottomSheetFlatList
+              ref={flatListRef}
               data={conversation}
               keyExtractor={(_, index) => index.toString()}
               renderItem={renderChatItem}
@@ -380,7 +393,7 @@ const GorhomBottomSheet = ({
                 ) : null
               }
               contentContainerStyle={{
-                paddingHorizontal: 8,
+                paddingHorizontal: 16,
                 paddingBottom: 16,
               }}
             />

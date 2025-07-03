@@ -648,6 +648,7 @@ const BibleScreen = () => {
           expoundText={expoundText}
           firstRowActions={firstRowActions}
           handleColorSelect={handleColorSelect}
+          handleRemoveHighlight={handleRemoveHighlight}
           selectedHighlightColor={selectedHighlightColor}
           hasExistingHighlight={hasExistingHighlight}
           getExistingHighlightColor={getExistingHighlightColor}

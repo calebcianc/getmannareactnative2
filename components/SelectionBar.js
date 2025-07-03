@@ -29,6 +29,7 @@ export function SelectionBar({
   expoundText,
   firstRowActions,
   handleColorSelect,
+  handleRemoveHighlight,
   selectedHighlightColor,
   hasExistingHighlight,
   getExistingHighlightColor,
@@ -56,6 +57,7 @@ export function SelectionBar({
           {isHighlightMode ? (
             <ColorPicker
               onColorSelect={handleColorSelect}
+              onRemoveHighlight={handleRemoveHighlight}
               selectedColor={selectedHighlightColor}
               hasExistingHighlight={hasExistingHighlight()}
               existingColor={getExistingHighlightColor()}
